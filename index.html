@@ -644,9 +644,8 @@ function addScene(){
   if(!name)return;
   var sid='scene'+Date.now();
   scenes[sid]={name:name};
-  // Guardar escena actual antes de añadir
   saveCurrentScene();
-  // Añadir pestaña
+  if(window._db)window._db.ref('sceneList/'+sid).set(name);
   renderSceneTabs();
   switchScene(sid);
 }
@@ -658,6 +657,7 @@ function deleteScene(e,sid){
   // Eliminar de Firebase
   if(window._db){
     window._db.ref('scenes/'+sid).remove();
+    window._db.ref('sceneList/'+sid).remove();
   }
   delete scenes[sid];
   // Si era la activa, ir a la primera disponible
@@ -689,6 +689,8 @@ function renderSceneTabs(){
       var n=prompt('Renombrar escena:',scenes[sid].name);
       if(!n)return;
       scenes[sid].name=n;
+      if(window._db)window._db.ref('sceneList/'+sid).set(n);
+      if(window._db)window._db.ref('scenes/'+sid+'/name').set(n);
       renderSceneTabs();
       toast('Escena renombrada');
     });
@@ -1020,7 +1022,21 @@ window.addEventListener('load',function(){
     });
     window._activeListeners.push(function(){monRef.off('child_added',h7);monRef.off('child_removed',h8);});
   };
-  window._setupSceneListeners('scene1');
+  // Restaurar escenas guardadas entre sesiones
+  db.ref('sceneList').once('value',function(snap){
+    var d=snap.val();
+    if(d&&Object.keys(d).length>0){
+      scenes={};
+      Object.keys(d).sort().forEach(function(sid){scenes[sid]={name:d[sid]};});
+      currentSceneId=Object.keys(scenes)[0];
+      renderSceneTabs();
+      window._setupSceneListeners(currentSceneId);
+      toast('Sesión restaurada ·  '+Object.keys(scenes).length+' escena(s)');
+    } else {
+      db.ref('sceneList/scene1').set('Escena 1');
+      window._setupSceneListeners('scene1');
+    }
+  });
   db.ref('tokens').on('child_changed',function(snap){
     var d=snap.val();if(!d)return;var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
     if(d.pos&&d.pos.by!==window._ME){
