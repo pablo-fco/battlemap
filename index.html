@@ -263,7 +263,6 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
       <button class="cpb" id="cpb-ren">✏ Renombrar</button>
       <button class="cpb" id="cpb-sz">⟳ Cambiar tamaño</button>
       <button class="cpb" id="cpb-portrait">🖼 Asignar retrato</button>
-      <button class="cpb" id="cpb-crop-card">✂ Recortar imagen carta</button>
       <button class="cpb del" id="cpb-del">🗑 Eliminar carta</button>
       <div id="cp-tip">Arrastra la carta al<br>tablero para colocar<br>un token</div>
     </div>
@@ -363,7 +362,6 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 <input type="file" id="fp" accept="image/*" style="display:none">
 <input type="file" id="fa" accept="image/*" style="display:none">
 <input type="file" id="fportrait" accept="image/*" style="display:none">
-<input type="file" id="fcardcrop" accept="image/*" style="display:none">
 <input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
 <input type="file" id="f-fx" accept="audio/*" style="display:none">
 
@@ -428,8 +426,34 @@ document.addEventListener('mouseup',function(e){
 // Panel lateral
 function openCardPanel(card){if(selCard)selCard.classList.remove('sel');if(selCard===card){selCard=null;cpanel.classList.remove('on');return;}selCard=card;card.classList.add('sel');refreshPanel();cpanel.classList.add('on');}
 function refreshPanel(){if(!selCard)return;var ci=document.getElementById('cp-img');ci.innerHTML='';var portrait=portraits[selCard.dataset.cardid];if(portrait){var i=new Image();i.src=portrait;ci.appendChild(i);}else{var s=document.createElement('span');s.textContent=selCard.dataset.emoji||'?';ci.appendChild(s);}document.getElementById('cp-name').textContent=selCard.dataset.name;var sz=selCard.dataset.sz||'mediano';document.getElementById('cp-sz').textContent=sz+' · '+(SZD[sz]?SZD[sz].f:'5×5 ft');}
-document.getElementById('cpb-ren').addEventListener('click',function(){if(!selCard)return;var n=prompt('Nuevo nombre:',selCard.dataset.name);if(!n)return;selCard.dataset.name=n;selCard.querySelector('.cn').textContent=n;document.getElementById('cp-name').textContent=n;toast('Renombrado');});
-document.getElementById('cpb-sz').addEventListener('click',function(){if(!selCard)return;var s=prompt('Tamaño ('+SZL.join(', ')+'):',selCard.dataset.sz);if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}selCard.dataset.sz=s;var el=selCard.querySelector('.csz');if(el)el.textContent=s+' · '+SZD[s].f;document.getElementById('cp-sz').textContent=s+' · '+SZD[s].f;toast('Tamaño actualizado');});
+document.getElementById('cpb-ren').addEventListener('click',function(){
+  if(!selCard)return;
+  var n=prompt('Nuevo nombre:',selCard.dataset.name);if(!n)return;
+  selCard.dataset.name=n;selCard.querySelector('.cn').textContent=n;
+  document.getElementById('cp-name').textContent=n;
+  if(window._db&&selCard.dataset.cardid){
+    if(selCard.classList.contains('mc'))
+      window._db.ref('scenes/'+currentSceneId+'/monsters/'+selCard.dataset.cardid).update({name:n});
+    else
+      window._db.ref('cards/'+selCard.dataset.cardid).update({name:n});
+  }
+  toast('Renombrado');
+});
+document.getElementById('cpb-sz').addEventListener('click',function(){
+  if(!selCard)return;
+  var s=prompt('Tamaño ('+SZL.join(', ')+'):',selCard.dataset.sz);
+  if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}
+  selCard.dataset.sz=s;
+  var el=selCard.querySelector('.csz');if(el)el.textContent=s+' · '+SZD[s].f;
+  document.getElementById('cp-sz').textContent=s+' · '+SZD[s].f;
+  if(window._db&&selCard.dataset.cardid){
+    if(selCard.classList.contains('mc'))
+      window._db.ref('scenes/'+currentSceneId+'/monsters/'+selCard.dataset.cardid).update({sz:s});
+    else
+      window._db.ref('cards/'+selCard.dataset.cardid).update({sz:s});
+  }
+  toast('Tamaño actualizado');
+});
 document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
 document.getElementById('cpb-del').addEventListener('click',function(){if(!selCard)return;if(!confirm('¿Eliminar esta carta?'))return;if(window._db&&selCard.dataset.cardid&&!selCard.dataset.remote)window._db.ref('cards/'+selCard.dataset.cardid).remove();selCard.remove();selCard=null;cpanel.classList.remove('on');});
 document.addEventListener('click',function(e){if(!e.target.closest('.pc,.mc,#cpanel')){if(selCard)selCard.classList.remove('sel');selCard=null;cpanel.classList.remove('on');}});
@@ -873,83 +897,6 @@ function saveMapDebounced(){
   _mapSaveTimer=setTimeout(saveMapToFirebase,800);
 }
 
-
-// ── RECORTAR IMAGEN DE CARTA ──
-var cropCardTarget=null;
-
-document.getElementById('cpb-crop-card').addEventListener('click',function(){
-  if(!selCard)return;
-  cropCardTarget=selCard;
-  document.getElementById('fcardcrop').click();
-});
-
-document.getElementById('fcardcrop').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  var fr=new FileReader();
-  fr.onload=function(ev){
-    // Reutilizar el mismo recortador pero en modo carta
-    cropB64=ev.target.result;
-    cropSrc.src=cropB64;
-    cropSelEl.style.display='none';
-    cropRect={x:0,y:0,w:0,h:0};
-    document.getElementById('crop-title').textContent='✂ RECORTAR IMAGEN DE CARTA';
-    document.getElementById('crop-overlay').classList.add('on');
-    // Marcar que estamos recortando la carta, no el retrato
-    document.getElementById('crop-overlay').dataset.mode='card';
-  };
-  fr.readAsDataURL(f);
-  e.target.value='';
-});
-
-// Patch confirmCrop to handle card mode
-var _origConfirmCrop=window.confirmCrop;
-window.confirmCrop=function(){
-  var mode=document.getElementById('crop-overlay').dataset.mode;
-  if(mode==='card'){
-    // Recortar para la imagen de la carta
-    var tc=cropCardTarget;
-    if(!tc||!cropB64){closeCrop();return;}
-    var useFull=cropRect.w<5||cropRect.h<5;
-    var dw=cropSrc.offsetWidth,dh=cropSrc.offsetHeight;
-    var scX=cropSrc.naturalWidth/dw,scY=cropSrc.naturalHeight/dh;
-    var sx=useFull?0:Math.round(cropRect.x*scX),sy=useFull?0:Math.round(cropRect.y*scY);
-    var sw=useFull?cropSrc.naturalWidth:Math.round(cropRect.w*scX);
-    var sh=useFull?cropSrc.naturalHeight:Math.round(cropRect.h*scY);
-    var canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
-    var ctx=canvas.getContext('2d'),tmp=new Image();
-    tmp.onload=function(){
-      ctx.drawImage(tmp,sx,sy,sw,sh,0,0,256,256);
-      var result=canvas.toDataURL('image/jpeg',.92);
-      // Actualizar imagen en la carta
-      var ci=tc.querySelector('.ci');
-      ci.innerHTML='';
-      var img=new Image();img.src=result;ci.appendChild(img);
-      // Guardar en dataset para persistencia
-      tc.dataset.cardImg=result;
-      // Guardar en Firebase según tipo de carta
-      if(window._db&&tc.dataset.cardid){
-        if(tc.classList.contains('mc')){
-          // Monstruo — guardar en escena actual
-          window._db.ref('scenes/'+currentSceneId+'/monsters/'+tc.dataset.cardid).update({cardImg:result});
-        } else {
-          // Héroe — guardar en cards global
-          window._db.ref('cards/'+tc.dataset.cardid).update({cardImg:result});
-        }
-      }
-      cropCardTarget=null;
-      document.getElementById('crop-overlay').dataset.mode='portrait';
-      document.getElementById('crop-title').textContent='✂ SELECCIONAR RETRATO';
-      closeCrop();
-      toast('Imagen de carta actualizada');
-    };
-    tmp.src=cropB64;
-  } else {
-    // Modo retrato original
-    document.getElementById('crop-overlay').dataset.mode='portrait';
-    document.getElementById('crop-title').textContent='✂ SELECCIONAR RETRATO';
-    _origConfirmCrop();
-  }
-};
 
 applyVP();
 window.portraits=portraits;
