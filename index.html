@@ -727,26 +727,33 @@ function saveCurrentScene(){
     src:miEl.src,w:mw,h:mh,mx:mx,my:my,ms:ms,vx:vx,vy:vy,vs:vs
   }:null;
 
+  // Guardar cartas de monstruos de esta escena
+  var monsterData={};
+  document.querySelectorAll('#clist .mc:not([data-remote="1"])').forEach(function(card){
+    var cid=card.dataset.cardid;
+    var ci=card.querySelector('.ci');
+    var imgSrc='';if(ci&&ci.querySelector('img'))imgSrc=ci.querySelector('img').src;
+    monsterData[cid]={name:card.dataset.name,sz:card.dataset.sz,emoji:card.dataset.emoji||'👹',portrait:portraits[cid]||'',cardImg:imgSrc};
+  });
+
   if(window._db){
     window._db.ref('scenes/'+currentSceneId).set({
       name:scenes[currentSceneId]?scenes[currentSceneId].name:'Escena',
       tokens:tokData,
       fog:fogData,
-      map:mapData||null
+      map:mapData||null,
+      monsters:monsterData
     });
   }
 }
 
 function clearBoard(){
-  // Limpiar tokens
   document.querySelectorAll('.token').forEach(function(t){t.remove();});
-  // Limpiar niebla
   document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});
-  // Limpiar mapa
-  miEl.style.display='none';
-  miEl.src='';
-  mw=0;mh=0;mx=0;my=0;ms=1;
-  vx=0;vy=0;vs=1;
+  // Limpiar cartas de monstruos (no remotas — las locales de esta escena)
+  document.querySelectorAll('#clist .mc:not([data-remote="1"])').forEach(function(c){c.remove();});
+  miEl.style.display='none';miEl.src='';
+  mw=0;mh=0;mx=0;my=0;ms=1;vx=0;vy=0;vs=1;
   document.getElementById('bighint').style.display='block';
   applyVP();
 }
@@ -809,6 +816,35 @@ function switchScene(sid){
         Object.keys(d.fog).forEach(function(fid){
           var f=d.fog[fid];
           placeFog(fid,f.x,f.y,f.w,f.h);
+        });
+      }
+      // Restaurar cartas de monstruos de esta escena
+      if(d.monsters){
+        Object.keys(d.monsters).forEach(function(cid){
+          var m=d.monsters[cid];
+          var list=document.getElementById('clist');
+          var card=document.createElement('div');card.className='mc';
+          card.dataset.cardid=cid;card.dataset.name=m.name;card.dataset.sz=m.sz||'mediano';
+          card.dataset.type='enemy';card.dataset.emoji=m.emoji||'👹';
+          if(m.portrait)portraits[cid]=m.portrait;
+          var ci=document.createElement('div');ci.className='ci';
+          if(m.cardImg){var img=new Image();img.src=m.cardImg;ci.appendChild(img);}
+          else if(m.portrait){var img2=new Image();img2.src=m.portrait;ci.appendChild(img2);}
+          else ci.textContent=m.emoji||'👹';
+          var cn=document.createElement('div');cn.className='cn';cn.textContent=m.name;
+          var cs=document.createElement('div');cs.className='csz';cs.textContent=(m.sz||'mediano')+' · '+(SZD[m.sz]?SZD[m.sz].f:'5×5 ft');
+          card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
+          card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
+          card.addEventListener('mousedown',function(e){
+            if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
+            function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
+              document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+              startDrag(e,{type:'enemy',emoji:m.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:cid});
+            }}
+            function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+            document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+          });
+          list.insertBefore(card,list.querySelector('.amb'));
         });
       }
       toast('Escena: '+scenes[sid].name);
