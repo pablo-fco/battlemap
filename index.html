@@ -573,7 +573,8 @@ function startDrag(e,data){
   if(data.cardid){
     var srcCard=document.querySelector('[data-cardid="'+data.cardid+'"]');
     data.hidden=srcCard&&srcCard.classList.contains('hidden')?1:0;
-    console.log('startDrag cardid:',data.cardid,'hidden:',data.hidden,'card found:',!!srcCard,'has hidden class:',srcCard&&srcCard.classList.contains('hidden'));
+    var allCards=document.querySelectorAll('[data-cardid="'+data.cardid+'"]');
+    console.log('startDrag cardid:',data.cardid,'hidden:',data.hidden,'total cards with this id:',allCards.length,'classes:',Array.from(allCards).map(function(c){return c.className;}));
   } else {
     data.hidden=0;
   }
@@ -975,14 +976,22 @@ function saveMapDebounced(){
 // ── VISIBILIDAD DE CARTAS ──
 // isDM: el DM es quien tiene el panel de audio/dados visible (tecla M/D)
 // Simplificado: isDM se activa manualmente con una variable global
-var isDM=false;
-// El DM se identifica abriendo el panel de audio con una combinación especial
-// Por defecto todos son jugadores; el DM activa su modo con Ctrl+M
+// Persistir modo DM en localStorage
+var isDM=localStorage.getItem('isDM')==='1';
+// Indicador visual permanente del modo DM
+function updateDMIndicator(){
+  var ind=document.getElementById('dm-indicator');
+  if(!ind){ind=document.createElement('div');ind.id='dm-indicator';ind.style.cssText='position:fixed;top:4px;left:50%;transform:translateX(-50%);background:#5c3d1a;border:1px solid #c9a84c;color:#c9a84c;font-size:10px;padding:2px 10px;border-radius:3px;z-index:9999;pointer-events:none;letter-spacing:1px;';document.body.appendChild(ind);}
+  ind.textContent=isDM?'🎭 MODO MASTER':'';
+  ind.style.display=isDM?'block':'none';
+}
+updateDMIndicator();
 document.addEventListener('keydown',function(e){
   if(e.ctrlKey&&e.code==='KeyM'){
     isDM=!isDM;
-    toast(isDM?'🎭 Modo DM activado':'🎭 Modo jugador activado');
-    // Mostrar/ocultar cartas ocultas según el modo
+    localStorage.setItem('isDM',isDM?'1':'0');
+    toast(isDM?'🎭 Modo Master activado':'🎭 Modo jugador activado');
+    updateDMIndicator();
     refreshHiddenVisibility();
     e.preventDefault();
   }
