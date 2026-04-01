@@ -535,6 +535,16 @@ function confirmCrop(){
 
     cropTargetCard=null;
     closeCrop();
+    // Actualizar retrato en Firebase si está conectado
+    if(window._db){
+      window._db.ref('cards/'+cid).update({portrait:result});
+      // Actualizar tokens en Firebase
+      for(var j=0;j<tokens.length;j++){
+        if(tokens[j].dataset.tokenid){
+          window._db.ref('tokens/'+tokens[j].dataset.tokenid).update({portrait:result});
+        }
+      }
+    }
     toast('Retrato asignado · '+tokens.length+' token(s) actualizado(s)');
   };
   tmp.src=cropB64;
@@ -1033,6 +1043,42 @@ window.addEventListener('load', function(){
     if(el) el.remove();
   });
 
+  // Escuchar cambios en cartas (retrato, nombre, tamaño)
+  db.ref('cards').on('child_changed', function(snap){
+    var data = snap.val();
+    if(!data || data.by === clientId) return;
+    var card = document.querySelector('[data-remotecardid="' + snap.key + '"]');
+    if(!card) return;
+    // Actualizar nombre
+    if(data.name){
+      card.dataset.name=data.name;
+      var cn=card.querySelector('.cn');
+      if(cn) cn.textContent=data.name;
+    }
+    // Actualizar tamaño
+    if(data.sz){
+      card.dataset.sz=data.sz;
+      var cs=card.querySelector('.csz');
+      if(cs) cs.textContent=data.sz+' · '+(SZD[data.sz]?SZD[data.sz].f:'5×5 ft');
+    }
+    // Actualizar retrato
+    if(data.portrait){
+      var ci=card.querySelector('.ci');
+      if(ci){
+        ci.innerHTML='';
+        var img=new Image(); img.src=data.portrait; ci.appendChild(img);
+      }
+      // Actualizar tokens remotos con este cardid
+      var toks=document.querySelectorAll('.token[data-cardid="'+snap.key+'"]');
+      for(var i=0;i<toks.length;i++){
+        var lbl=toks[i].querySelector('.tlbl');
+        toks[i].innerHTML='';
+        var ti=new Image(); ti.src=data.portrait; toks[i].appendChild(ti);
+        if(lbl) toks[i].appendChild(lbl);
+      }
+    }
+  });
+
   // Publicar token al crearlo
   function publicarToken(tok, type, label, sz, cardid, content, isImg){
     var tid = tok.dataset.tokenid;
@@ -1182,20 +1228,44 @@ window.addEventListener('load', function(){
   var _mkPCard = window.mkPCard;
   window.mkPCard = function(type,name,sz,imgB64){
     _mkPCard(type,name,sz,imgB64);
-    setTimeout(function(){
-      var cards = document.getElementById('hlist').querySelectorAll('.pc:not([data-remotecardid])');
-      if(cards.length) publicarCarta(cards[0], 'heroes');
-    }, 100);
+    // Buscar la carta recién creada — es la primera sin remotecardid en hlist
+    var list=document.getElementById('hlist');
+    var cards=list.querySelectorAll('.pc:not([data-remotecardid])');
+    // La más reciente es la primera (insertBefore coloca al inicio)
+    if(cards.length>0){
+      var card=cards[0];
+      var cid=card.dataset.cardid;
+      db.ref('cards/'+cid).set({
+        by:clientId,
+        panel:'heroes',
+        name:card.dataset.name,
+        sz:card.dataset.sz,
+        type:card.dataset.type,
+        emoji:card.dataset.emoji,
+        portrait:window.portraits?(window.portraits[cid]||''):''
+      });
+    }
   };
 
   // Interceptar mkMCard para publicar carta
   var _mkMCard = window.mkMCard;
   window.mkMCard = function(name,sz,imgB64){
     _mkMCard(name,sz,imgB64);
-    setTimeout(function(){
-      var cards = document.getElementById('clist').querySelectorAll('.mc:not([data-remotecardid])');
-      if(cards.length) publicarCarta(cards[0], 'monsters');
-    }, 100);
+    var list=document.getElementById('clist');
+    var cards=list.querySelectorAll('.mc:not([data-remotecardid])');
+    if(cards.length>0){
+      var card=cards[0];
+      var cid=card.dataset.cardid;
+      db.ref('cards/'+cid).set({
+        by:clientId,
+        panel:'monsters',
+        name:card.dataset.name,
+        sz:card.dataset.sz,
+        type:card.dataset.type||'enemy',
+        emoji:card.dataset.emoji||'👹',
+        portrait:window.portraits?(window.portraits[cid]||''):''
+      });
+    }
   };
 
   // Eliminar token en Firebase
