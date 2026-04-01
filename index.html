@@ -1034,94 +1034,138 @@ console.log('Para limpiar el tablero: _clearAllTokens()');
 window.addEventListener('load',function(){
   var cfg={apiKey:"AIzaSyDLN-ZxaCHCo_gPEI20PjaCSqYrr-PtauQ",databaseURL:"https://battlemap-dnd-a22df-default-rtdb.europe-west1.firebasedatabase.app",projectId:"battlemap-dnd-a22df",appId:"1:51829412848:web:440fc4ab9c7fe894490335"};
   if(!firebase.apps.length)firebase.initializeApp(cfg);
-  var db=firebase.database();window._db=db;window._ME='u'+Math.random().toString(36).slice(2,8);
-  console.log('Firebase OK id:',window._ME);toast('🔥 Multijugador activo');
+  var db=firebase.database();window._db=db;
+  var ME='u'+Math.random().toString(36).slice(2,8);window._ME=ME;
+  toast('🔥 Multijugador activo');
 
-  // CARTAS
-  // Delay card listener so local DOM is ready before child_added fires
-  setTimeout(function(){
-    db.ref('cards').on('child_added',function(snap){
-      var d=snap.val();if(!d)return;
-      if(document.querySelector('[data-cardid="'+snap.key+'"]'))return;
-      if(d.by===window._ME)return;
-      if(!d.name||!d.panel)return; // ignore empty/corrupt entries
-      if(d.panel==='heroes')addRHero(d,snap.key);else addRMonster(d,snap.key);
-    });
-  },800);
-  db.ref('cards').on('child_changed',function(snap){
-    var d=snap.val();if(!d||d.by===window._ME)return;
-    var card=document.querySelector('[data-cardid="'+snap.key+'"]');if(!card)return;
-    if(d.name){card.dataset.name=d.name;var cn=card.querySelector('.cn');if(cn)cn.textContent=d.name;}
-    if(d.portrait){document.querySelectorAll('.token[data-cardid="'+snap.key+'"]').forEach(function(tok){var lbl=tok.querySelector('.tlbl');tok.innerHTML='';var ti=new Image();ti.src=d.portrait;tok.appendChild(ti);if(lbl)tok.appendChild(lbl);});}
-  });
-  db.ref('cards').on('child_removed',function(snap){var el=document.querySelector('[data-cardid="'+snap.key+'"][data-remote="1"]');if(el)el.remove();});
-
-  function addRHero(d,id){
-    var list=document.getElementById('hlist');var card=document.createElement('div');card.className='pc'+(d.type==='npc'?' ally':'');
-    card.dataset.cardid=id;card.dataset.remote='1';card.dataset.name=d.name;card.dataset.sz=d.sz;card.dataset.type=d.type;card.dataset.emoji=d.emoji||'🧙';
-    var ci=document.createElement('div');ci.className='ci';if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}else ci.textContent=d.emoji||'🧙';
-    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;card.appendChild(ci);card.appendChild(cn);
+  // ── HELPERS ──
+  function makeHeroCard(d,id){
+    var list=document.getElementById('hlist');
+    var card=document.createElement('div');
+    card.className='pc'+(d.type==='npc'?' ally':'');
+    card.dataset.cardid=id;card.dataset.remote='1';
+    card.dataset.name=d.name;card.dataset.sz=d.sz;
+    card.dataset.type=d.type;card.dataset.emoji=d.emoji||'🧙';
+    if(d.hidden){card.classList.add('hidden');card.dataset.hidden='1';var hb=document.createElement('span');hb.className='hidden-badge';hb.textContent='🚫';card.appendChild(hb);if(!isDM)card.style.display='none';}
+    var ci=document.createElement('div');ci.className='ci';
+    if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
+    else ci.textContent=d.emoji||'🧙';
+    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;
+    card.appendChild(ci);card.appendChild(cn);
     card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-    card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:d.type,emoji:d.emoji||'🧙',label:card.dataset.name,sz:card.dataset.sz,cardid:id});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
+    card.addEventListener('mousedown',function(e){
+      if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
+      function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
+        document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+        startDrag(e,{type:d.type,emoji:d.emoji||'🧙',label:card.dataset.name,sz:card.dataset.sz,cardid:id});
+      }}
+      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+    });
     list.insertBefore(card,list.querySelectorAll('.apb')[0]);
   }
-  function addRMonster(d,id){
-    var list=document.getElementById('clist');var card=document.createElement('div');card.className='mc';
-    card.dataset.cardid=id;card.dataset.remote='1';card.dataset.name=d.name;card.dataset.sz=d.sz||'mediano';card.dataset.type='enemy';card.dataset.emoji=d.emoji||'👹';
-    var ci=document.createElement('div');ci.className='ci';if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}else ci.textContent=d.emoji||'👹';
-    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
+
+  function makeMonsterCard(d,id){
+    var list=document.getElementById('clist');
+    var card=document.createElement('div');card.className='mc';
+    card.dataset.cardid=id;card.dataset.remote='1';
+    card.dataset.name=d.name;card.dataset.sz=d.sz||'mediano';
+    card.dataset.type='enemy';card.dataset.emoji=d.emoji||'👹';
+    if(d.hidden){card.classList.add('hidden');card.dataset.hidden='1';var hb=document.createElement('span');hb.className='hidden-badge';hb.textContent='🚫';card.appendChild(hb);if(!isDM)card.style.display='none';}
+    var ci=document.createElement('div');ci.className='ci';
+    if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
+    else ci.textContent=d.emoji||'👹';
+    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;
+    var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
     card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
     card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-    card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:id});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
+    card.addEventListener('mousedown',function(e){
+      if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
+      function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
+        document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+        startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:id});
+      }}
+      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+    });
     list.insertBefore(card,list.querySelector('.amb'));
   }
 
-  // TOKENS
-  // Escuchar mapa — solo aplicar si aún no tenemos mapa
-  // Escuchar mapa — se aplica siempre que cambie, en todas las pestañas
-  db.ref('map').on('value',function(snap){
-    var d=snap.val();if(!d||!d.b64)return;
-    // Si ya tenemos exactamente este mapa, no recargar
-    if(miEl.src===d.b64)return;
-    var t=new Image();
-    t.onload=function(){
-      mw=d.w||t.naturalWidth;mh=d.h||t.naturalHeight;
-      // Solo resetear posición si no había mapa antes
-      var hadMap=miEl.style.display==='block';
-      if(!hadMap){ms=1;mx=0;my=0;}
-      miEl.src=d.b64;miEl.style.display='block';
-      document.getElementById('bighint').style.display='none';
-      applyMap();
-      if(!hadMap)resetView();
-      toast('Mapa cargado');
-    };
-    t.src=d.b64;
-  });
+  function makeToken(d,tid){
+    var px=spx(d.sz);
+    var el=document.createElement('div');
+    el.className='token '+(d.type||'enemy');
+    var lx=d.cx!==undefined?d.cx-px/2:d.x;
+    var ly=d.cy!==undefined?d.cy-px/2:d.y;
+    el.style.cssText='left:'+lx+'px;top:'+ly+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
+    el.dataset.sz=d.sz;el.dataset.label=d.label;el.dataset.tokenid=tid;
+    el.dataset.type=d.type||'enemy';el.dataset.cardid=d.cardid||'';
+    if(d.portrait){var i=new Image();i.src=d.portrait;el.appendChild(i);}
+    else el.textContent=d.emoji||'👹';
+    var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=d.label;el.appendChild(lbl);
+    // Invisibilidad
+    if(d.invisible){
+      el.classList.add('invisible-tok');el.dataset.invisible='1';
+      if(isDM){el.classList.add('dm-view');}
+      else{el.style.display='none';}
+    }
+    el.addEventListener('mousedown',function(e){
+      if(e.button!==0||spc||editMode)return;
+      e.preventDefault();e.stopPropagation();hideCtx();
+      dtok=el;el.classList.add('drag');
+      var r=el.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;
+    });
+    el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=el;showCtx(e.clientX,e.clientY);});
+    tlayer.appendChild(el);
+    return el;
+  }
 
-  // Listeners por escena — se reconfiguran al cambiar de escena
-  window._activeListeners=[];
+  // ── CARTAS DE HÉROES (globales) ──
+  // Esperar 1s para que las cartas locales estén en el DOM
+  setTimeout(function(){
+    db.ref('cards').on('child_added',function(snap){
+      var d=snap.val();if(!d||!d.name||!d.panel)return;
+      if(d.by===ME)return;
+      if(document.querySelector('[data-cardid="'+snap.key+'"]'))return;
+      if(d.panel==='heroes')makeHeroCard(d,snap.key);
+    });
+    db.ref('cards').on('child_changed',function(snap){
+      var d=snap.val();if(!d||d.by===ME)return;
+      var card=document.querySelector('[data-cardid="'+snap.key+'"]');if(!card)return;
+      if(d.name){card.dataset.name=d.name;var cn=card.querySelector('.cn');if(cn)cn.textContent=d.name;}
+      if(d.portrait){
+        document.querySelectorAll('.token[data-cardid="'+snap.key+'"]').forEach(function(tok){
+          var lbl=tok.querySelector('.tlbl');tok.innerHTML='';
+          var ti=new Image();ti.src=d.portrait;tok.appendChild(ti);if(lbl)tok.appendChild(lbl);
+        });
+      }
+      if(d.cardImg){var ci=card.querySelector('.ci');if(ci){ci.innerHTML='';var img=new Image();img.src=d.cardImg;ci.appendChild(img);}}
+    });
+    db.ref('cards').on('child_removed',function(snap){
+      var el=document.querySelector('[data-cardid="'+snap.key+'"][data-remote="1"]');if(el)el.remove();
+    });
+  },1000);
+
+  // ── LISTENERS POR ESCENA ──
+  var _activeListeners=[];
   window._setupSceneListeners=function(sid){
-    // Desconectar listeners anteriores
-    window._activeListeners.forEach(function(fn){fn();});
-    window._activeListeners=[];
-    // Limpiar tokens y niebla remotos del tablero
-    document.querySelectorAll('.token').forEach(function(t){if(t.dataset.by&&t.dataset.by!==window._ME)t.remove();});
-    document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});
+    _activeListeners.forEach(function(fn){fn();});
+    _activeListeners=[];
 
     var sceneRef=db.ref('scenes/'+sid);
 
     // TOKENS
     var tokRef=sceneRef.child('tokens');
     var h1=tokRef.on('child_added',function(snap){
-      var d=snap.val();if(!d||d.by===window._ME)return;
+      var d=snap.val();if(!d)return;
+      if(d.by===ME)return;
       if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
-      var tok=addRToken(d,snap.key);
-      if(tok&&d.invisible){tok.classList.add('invisible-tok');if(isDM)tok.classList.add('dm-view');else tok.style.display='none';}
+      makeToken(d,snap.key);
     });
     var h2=tokRef.on('child_changed',function(snap){
       var d=snap.val();if(!d)return;
       var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
-      if(d.pos&&d.pos.by!==window._ME){
+      if(d.pos&&d.pos.by!==ME){
         var px=parseInt(tok.style.width)||spx(tok.dataset.sz||'mediano');
         if(d.pos.cx!==undefined){tok.style.left=(d.pos.cx-px/2)+'px';tok.style.top=(d.pos.cy-px/2)+'px';}
       }
@@ -1129,7 +1173,7 @@ window.addEventListener('load',function(){
     var h3=tokRef.on('child_removed',function(snap){
       var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(tok)tok.remove();
     });
-    window._activeListeners.push(function(){tokRef.off('child_added',h1);tokRef.off('child_changed',h2);tokRef.off('child_removed',h3);});
+    _activeListeners.push(function(){tokRef.off('child_added',h1);tokRef.off('child_changed',h2);tokRef.off('child_removed',h3);});
 
     // NIEBLA
     var fogRef=sceneRef.child('fog');
@@ -1141,7 +1185,7 @@ window.addEventListener('load',function(){
     var h5=fogRef.on('child_removed',function(snap){
       var el=document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]');if(el)el.remove();
     });
-    window._activeListeners.push(function(){fogRef.off('child_added',h4);fogRef.off('child_removed',h5);});
+    _activeListeners.push(function(){fogRef.off('child_added',h4);fogRef.off('child_removed',h5);});
 
     // MAPA
     var mapRef=sceneRef.child('map');
@@ -1159,45 +1203,29 @@ window.addEventListener('load',function(){
       };
       t.src=d.src;
     });
-    window._activeListeners.push(function(){mapRef.off('value',h6);});
+    _activeListeners.push(function(){mapRef.off('value',h6);});
 
-    // MONSTRUOS DE ESCENA
+    // MONSTRUOS POR ESCENA
     var monRef=sceneRef.child('monsters');
     var h7=monRef.on('child_added',function(snap){
-      var d=snap.val();if(!d)return;
-      // Ignorar si ya existe la carta (la creamos nosotros o ya se restauró)
+      var d=snap.val();if(!d||!d.name)return;
+      if(d.by===ME)return;
       if(document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]'))return;
-      if(d.by===window._ME)return;
-      var list=document.getElementById('clist');
-      var card=document.createElement('div');card.className='mc';
-      card.dataset.cardid=snap.key;card.dataset.remote='1';
-      card.dataset.name=d.name;card.dataset.sz=d.sz||'mediano';
-      card.dataset.type='enemy';card.dataset.emoji=d.emoji||'👹';
-      var ci=document.createElement('div');ci.className='ci';
-      if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
-      else ci.textContent=d.emoji||'👹';
-      var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;
-      var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
-      card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
-      if(d.hidden){card.classList.add('hidden');card.dataset.hidden='1';var _hb2=document.createElement('span');_hb2.className='hidden-badge';_hb2.textContent='🚫';card.appendChild(_hb2);if(!isDM)card.style.display='none';}
-      card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-      card.addEventListener('mousedown',function(e){
-        if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
-        function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
-          document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
-          startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:snap.key});
-        }}
-        function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
-        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-      });
-      list.insertBefore(card,list.querySelector('.amb'));
+      makeMonsterCard(d,snap.key);
     });
-    var h8=monRef.on('child_removed',function(snap){
+    var h8=monRef.on('child_changed',function(snap){
+      var d=snap.val();if(!d||d.by===ME)return;
+      var card=document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]');if(!card)return;
+      if(d.name){card.dataset.name=d.name;var cn=card.querySelector('.cn');if(cn)cn.textContent=d.name;}
+      if(d.cardImg){var ci=card.querySelector('.ci');if(ci){ci.innerHTML='';var img=new Image();img.src=d.cardImg;ci.appendChild(img);}}
+    });
+    var h9=monRef.on('child_removed',function(snap){
       var el=document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]');if(el)el.remove();
     });
-    window._activeListeners.push(function(){monRef.off('child_added',h7);monRef.off('child_removed',h8);});
+    _activeListeners.push(function(){monRef.off('child_added',h7);monRef.off('child_changed',h8);monRef.off('child_removed',h9);});
   };
-  // Restaurar escenas guardadas entre sesiones
+
+  // ── RESTAURAR ESCENAS ──
   db.ref('sceneList').once('value',function(snap){
     var d=snap.val();
     if(d&&Object.keys(d).length>0){
@@ -1206,55 +1234,26 @@ window.addEventListener('load',function(){
       currentSceneId=Object.keys(scenes)[0];
       renderSceneTabs();
       window._setupSceneListeners(currentSceneId);
-      toast('Sesión restaurada ·  '+Object.keys(scenes).length+' escena(s)');
+      toast('Sesión restaurada · '+Object.keys(scenes).length+' escena(s)');
     } else {
       db.ref('sceneList/scene1').set('Escena 1');
       window._setupSceneListeners('scene1');
     }
   });
-  db.ref('tokens').on('child_changed',function(snap){
-    var d=snap.val();if(!d)return;var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
-    if(d.pos&&d.pos.by!==window._ME){
-      // Las posiciones se guardan como centro del token en coords del boardInner
-      var px=parseInt(tok.style.width)||spx(tok.dataset.sz||'mediano');
-      tok.style.left=(d.pos.cx-px/2)+'px';
-      tok.style.top=(d.pos.cy-px/2)+'px';
-    }
-    if(d.portrait&&d.by!==window._ME){var lbl=tok.querySelector('.tlbl');tok.innerHTML='';var ti=new Image();ti.src=d.portrait;tok.appendChild(ti);if(lbl)tok.appendChild(lbl);}
-  });
-  db.ref('tokens').on('child_removed',function(snap){var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(tok)tok.remove();});
 
-  function addRToken(d,tid){
-    var px=spx(d.sz);var el=document.createElement('div');el.className='token '+(d.type||'enemy');
-    el.style.cssText='left:'+d.x+'px;top:'+d.y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
-    // Use center coords if available for better precision
-    if(d.cx!==undefined){el.style.left=(d.cx-px/2)+'px';el.style.top=(d.cy-px/2)+'px';}
-    el.dataset.sz=d.sz;el.dataset.label=d.label;el.dataset.tokenid=tid;el.dataset.type=d.type||'enemy';el.dataset.cardid=d.cardid||'';
-    if(d.portrait){var i=new Image();i.src=d.portrait;el.appendChild(i);}else el.textContent=d.emoji||'👹';
-    var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=d.label;el.appendChild(lbl);
-    // Aplicar invisibilidad si corresponde
-    if(d.invisible){
-      el.classList.add('invisible-tok');
-      el.dataset.invisible='1';
-      if(isDM) el.classList.add('dm-view');
-      else el.style.display='none';
-    }
-    el.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=el;el.classList.add('drag');var r=el.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
-    el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=el;showCtx(e.clientX,e.clientY);});
-    tlayer.appendChild(el);
-  }
-
-  // DADOS — escuchar tiradas de otros
+  // ── DADOS ──
   setTimeout(function(){
     db.ref('rolls').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
-      if(!window._diceReady)return;var d=snap.val();if(!d)return;
-      var mod=d.mod||0,modStr=mod>0?'+'+mod:mod<0?''+mod:'',detail=d.label+(modStr||'');
+      if(!window._diceReady)return;
+      var d=snap.val();if(!d)return;
+      var mod=d.mod||0,modStr=mod>0?'+'+mod:mod<0?''+mod:'',dice=d.label+(modStr||'');
       var special='';if(d.sides===20&&d.roll===20)special='⚡ ¡CRÍTICO!';if(d.sides===20&&d.roll===1)special='💀 ¡PIFIA!';
-      addDiceLog(d.who,detail,d.total,false,special);
-      showDiceNotif(d.who,detail,d.total,d.sides,d.roll,special);
+      addDiceLog(d.who,dice,d.total,false,special);
+      showDiceNotif(d.who,dice,d.total,d.sides,d.roll,special);
     });
     window._diceReady=true;
-  },1200);
+  },1500);
+
 });
 </script>
 </body>
