@@ -553,12 +553,27 @@ function confirmCrop(){
 // ── CARTAS JUGADOR ──
 document.getElementById('fp').addEventListener('change',function(e){
   var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkPCard('player',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
+  loadCardImage(f,function(b64){
+    mkPCard('player',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);
+    // Publicar en Firebase
+    setTimeout(function(){
+      var list=document.getElementById('hlist');
+      var cards=list.querySelectorAll('.pc:not([data-remotecardid])');
+      if(cards.length&&window._publishCard) window._publishCard(cards[0],'heroes');
+    },200);
+  });
   e.target.value='';
 });
 document.getElementById('fa').addEventListener('change',function(e){
   var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkPCard('npc',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
+  loadCardImage(f,function(b64){
+    mkPCard('npc',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);
+    setTimeout(function(){
+      var list=document.getElementById('hlist');
+      var cards=list.querySelectorAll('.pc:not([data-remotecardid])');
+      if(cards.length&&window._publishCard) window._publishCard(cards[0],'heroes');
+    },200);
+  });
   e.target.value='';
 });
 function loadCardImage(file,cb){
@@ -593,7 +608,14 @@ function mkPCard(type,name,sz,imgB64){
 // ── CARTAS MONSTRUO ──
 document.getElementById('fmo').addEventListener('change',function(e){
   var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkMCard(f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
+  loadCardImage(f,function(b64){
+    mkMCard(f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);
+    setTimeout(function(){
+      var list=document.getElementById('clist');
+      var cards=list.querySelectorAll('.mc:not([data-remotecardid])');
+      if(cards.length&&window._publishCard) window._publishCard(cards[0],'monsters');
+    },200);
+  });
   e.target.value='';
 });
 function mkMCard(name,sz,imgB64){
@@ -1224,56 +1246,43 @@ window.addEventListener('load', function(){
     return d;
   };
 
-  // Interceptar mkPCard para publicar carta
-  var _mkPCard = window.mkPCard;
-  window.mkPCard = function(type,name,sz,imgB64){
-    _mkPCard(type,name,sz,imgB64);
-    // Buscar la carta recién creada — es la primera sin remotecardid en hlist
-    var list=document.getElementById('hlist');
-    var cards=list.querySelectorAll('.pc:not([data-remotecardid])');
-    // La más reciente es la primera (insertBefore coloca al inicio)
-    if(cards.length>0){
-      var card=cards[0];
-      var cid=card.dataset.cardid;
-      db.ref('cards/'+cid).set({
-        by:clientId,
-        panel:'heroes',
-        name:card.dataset.name,
-        sz:card.dataset.sz,
-        type:card.dataset.type,
-        emoji:card.dataset.emoji,
-        portrait:window.portraits?(window.portraits[cid]||''):''
-      });
-    }
+  // Publicar carta en Firebase — llamado tras crear una carta local
+  window._publishCard = function(card, panel){
+    if(!card || !card.dataset || !card.dataset.cardid) return;
+    var cid=card.dataset.cardid;
+    db.ref('cards/'+cid).set({
+      by:clientId,
+      panel:panel,
+      name:card.dataset.name,
+      sz:card.dataset.sz,
+      type:card.dataset.type||'enemy',
+      emoji:card.dataset.emoji||'👹',
+      portrait:window.portraits?(window.portraits[cid]||''):''
+    });
   };
 
-  // Interceptar mkMCard para publicar carta
-  var _mkMCard = window.mkMCard;
-  window.mkMCard = function(name,sz,imgB64){
-    _mkMCard(name,sz,imgB64);
-    var list=document.getElementById('clist');
-    var cards=list.querySelectorAll('.mc:not([data-remotecardid])');
-    if(cards.length>0){
-      var card=cards[0];
-      var cid=card.dataset.cardid;
-      db.ref('cards/'+cid).set({
-        by:clientId,
-        panel:'monsters',
-        name:card.dataset.name,
-        sz:card.dataset.sz,
-        type:card.dataset.type||'enemy',
-        emoji:card.dataset.emoji||'👹',
-        portrait:window.portraits?(window.portraits[cid]||''):''
-      });
-    }
-  };
-
-  // Eliminar token en Firebase
+  // Eliminar token en Firebase (cualquiera puede eliminar cualquier token)
   document.getElementById('ctx-del').addEventListener('click', function(){
     if(ctxTok && ctxTok.dataset.tokenid){
       db.ref('tokens/' + ctxTok.dataset.tokenid).remove();
     }
   });
+
+  // Eliminar carta en Firebase al borrarla localmente
+  document.getElementById('cpb-del').addEventListener('click', function(){
+    if(selCard && selCard.dataset.cardid && !selCard.dataset.remotecardid){
+      db.ref('cards/' + selCard.dataset.cardid).remove();
+    }
+  });
+
+  // Limpiar todos los tokens huérfanos al cargar (botón oculto para el DM)
+  window._clearAllTokens = function(){
+    db.ref('tokens').remove();
+    db.ref('cards').remove();
+    document.querySelectorAll('.token').forEach(function(t){t.remove();});
+    toast('Tablero limpiado');
+  };
+  console.log('Para limpiar el tablero escribe: _clearAllTokens()');
 
 });
 </script>
