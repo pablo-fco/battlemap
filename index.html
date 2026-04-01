@@ -957,5 +957,256 @@ function playFx(url,name){
 
 </script>
 
+
+<script>
+// ── FIREBASE MULTIJUGADOR ──
+// Esperar a que los scripts de Firebase estén cargados
+window.addEventListener('load', function(){
+
+  var firebaseConfig = {
+    apiKey: "AIzaSyDLN-ZxaCHCo_gPEI20PjaCSqYrr-PtauQ",
+    authDomain: "battlemap-dnd-a22df.firebaseapp.com",
+    databaseURL: "https://battlemap-dnd-a22df-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "battlemap-dnd-a22df",
+    storageBucket: "battlemap-dnd-a22df.firebasestorage.app",
+    messagingSenderId: "51829412848",
+    appId: "1:51829412848:web:440fc4ab9c7fe894490335"
+  };
+
+  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  var db = firebase.database();
+  window._db = db; // hacer global para debug
+
+  var clientId = 'c' + Math.random().toString(36).slice(2,9);
+  console.log('Firebase conectado, clientId:', clientId);
+  toast('🔥 Multijugador activo');
+
+  // ── SINCRONIZAR POSICIÓN DE TOKENS ──
+  // Cuando sueltas un token, publicar posición
+  document.addEventListener('mouseup', function(e){
+    if(window._dtok && window._dtok.dataset && window._dtok.dataset.tokenid){
+      var tok = window._dtok;
+      var x = parseFloat(tok.style.left);
+      var y = parseFloat(tok.style.top);
+      db.ref('tokens/' + tok.dataset.tokenid + '/pos').set({x:x, y:y, by:clientId});
+    }
+  }, true);
+
+  // Escuchar movimientos de tokens de otros jugadores
+  db.ref('tokens').on('child_changed', function(snap){
+    var data = snap.val();
+    if(!data || !data.pos) return;
+    if(data.pos.by === clientId) return;
+    var tok = document.querySelector('.token[data-tokenid="' + snap.key + '"]');
+    if(tok){
+      tok.style.left = data.pos.x + 'px';
+      tok.style.top  = data.pos.y + 'px';
+    }
+  });
+
+  // Escuchar tokens nuevos de otros
+  db.ref('tokens').on('child_added', function(snap){
+    var data = snap.val();
+    if(!data) return;
+    if(data.by === clientId) return;
+    if(document.querySelector('.token[data-tokenid="' + snap.key + '"]')) return;
+    crearTokenRemoto(data, snap.key);
+  });
+
+  // Escuchar tokens eliminados
+  db.ref('tokens').on('child_removed', function(snap){
+    var tok = document.querySelector('.token[data-tokenid="' + snap.key + '"]');
+    if(tok) tok.remove();
+  });
+
+  // Escuchar cartas nuevas
+  db.ref('cards').on('child_added', function(snap){
+    var data = snap.val();
+    if(!data || data.by === clientId) return;
+    if(document.querySelector('[data-remotecardid="' + snap.key + '"]')) return;
+    if(data.panel === 'heroes') crearCartaHeroeRemota(data, snap.key);
+    else crearCartaMonstruoRemota(data, snap.key);
+  });
+
+  db.ref('cards').on('child_removed', function(snap){
+    var el = document.querySelector('[data-remotecardid="' + snap.key + '"]');
+    if(el) el.remove();
+  });
+
+  // Publicar token al crearlo
+  function publicarToken(tok, type, label, sz, cardid, content, isImg){
+    var tid = tok.dataset.tokenid;
+    db.ref('tokens/' + tid).set({
+      by: clientId,
+      type: type,
+      label: label,
+      sz: sz,
+      cardid: cardid || '',
+      portrait: isImg ? content : '',
+      emoji: isImg ? '' : content,
+      x: parseFloat(tok.style.left),
+      y: parseFloat(tok.style.top)
+    });
+  }
+
+  // Publicar carta
+  function publicarCarta(card, panel){
+    var cid = card.dataset.cardid;
+    db.ref('cards/' + cid).set({
+      by: clientId,
+      panel: panel,
+      name: card.dataset.name,
+      sz: card.dataset.sz,
+      type: card.dataset.type,
+      emoji: card.dataset.emoji,
+      portrait: window.portraits ? (window.portraits[cid] || '') : ''
+    });
+  }
+
+  // Crear token remoto
+  function crearTokenRemoto(data, tid){
+    var px = spx(data.sz);
+    var d = document.createElement('div');
+    d.className = 'token ' + (data.type || 'enemy');
+    d.style.cssText = 'left:'+data.x+'px;top:'+data.y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
+    d.dataset.sz = data.sz;
+    d.dataset.label = data.label;
+    d.dataset.tokenid = tid;
+    d.dataset.type = data.type || 'enemy';
+    if(data.portrait){ var i=new Image(); i.src=data.portrait; d.appendChild(i); }
+    else d.textContent = data.emoji || '👹';
+    var lbl = document.createElement('div'); lbl.className='tlbl'; lbl.textContent=data.label;
+    d.appendChild(lbl);
+    d.addEventListener('mousedown', function(e){
+      if(e.button!==0||window._spc||window._editMode)return;
+      e.preventDefault(); e.stopPropagation();
+      window._dtok = d; d.classList.add('drag');
+      var r=d.getBoundingClientRect();
+      window._dox=(e.clientX-r.left)/window._vs;
+      window._doy=(e.clientY-r.top)/window._vs;
+    });
+    tlayer.appendChild(d);
+    return d;
+  }
+
+  // Crear carta héroe remota
+  function crearCartaHeroeRemota(data, remoteid){
+    var list = document.getElementById('hlist');
+    var card = document.createElement('div');
+    card.className = 'pc' + (data.type==='npc' ? ' ally' : '');
+    card.dataset.cardid = remoteid;
+    card.dataset.remotecardid = remoteid;
+    card.dataset.name = data.name;
+    card.dataset.sz = data.sz;
+    card.dataset.type = data.type;
+    card.dataset.emoji = data.emoji;
+    var ci = document.createElement('div'); ci.className='ci';
+    if(data.portrait){ var img=new Image(); img.src=data.portrait; ci.appendChild(img); }
+    else ci.textContent = data.emoji;
+    var cn = document.createElement('div'); cn.className='cn'; cn.textContent=data.name;
+    card.appendChild(ci); card.appendChild(cn);
+    card.addEventListener('click', function(e){ e.stopPropagation(); openCardPanel(card); });
+    card.addEventListener('mousedown', function(e){
+      if(e.button!==0)return;
+      var sx=e.clientX, sy=e.clientY;
+      function mv(ev){ if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); startDrag(e,{type:data.type,emoji:data.emoji,label:card.dataset.name,sz:card.dataset.sz,cardid:remoteid}); }}
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    });
+    list.insertBefore(card, list.querySelectorAll('.apb')[0]);
+  }
+
+  // Crear carta monstruo remota
+  function crearCartaMonstruoRemota(data, remoteid){
+    var list = document.getElementById('clist');
+    var card = document.createElement('div'); card.className='mc';
+    card.dataset.cardid = remoteid;
+    card.dataset.remotecardid = remoteid;
+    card.dataset.name = data.name;
+    card.dataset.sz = data.sz;
+    card.dataset.type = 'enemy';
+    card.dataset.emoji = data.emoji || '👹';
+    var ci = document.createElement('div'); ci.className='ci';
+    if(data.portrait){ var img=new Image(); img.src=data.portrait; ci.appendChild(img); }
+    else ci.textContent = data.emoji || '👹';
+    var cn = document.createElement('div'); cn.className='cn'; cn.textContent=data.name;
+    var cs = document.createElement('div'); cs.className='csz'; cs.textContent=(data.sz||'mediano')+' · '+(SZD[data.sz]?SZD[data.sz].f:'5×5 ft');
+    card.appendChild(ci); card.appendChild(cn); card.appendChild(cs);
+    card.addEventListener('click', function(e){ e.stopPropagation(); openCardPanel(card); });
+    card.addEventListener('mousedown', function(e){
+      if(e.button!==0)return;
+      var sx=e.clientX, sy=e.clientY;
+      function mv(ev){ if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); startDrag(e,{type:'enemy',emoji:data.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:remoteid}); }}
+      function up(){ document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }
+      document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up);
+    });
+    list.insertBefore(card, list.querySelector('.amb'));
+  }
+
+  // Interceptar mkToken para publicar en Firebase y asignar tokenid
+  var _mkToken = window.mkToken;
+  window.mkToken = function(type,content,label,clientX,clientY,sz,isImg,cardid){
+    var px=spx(sz);
+    var r=bwrap.getBoundingClientRect();
+    var x=(clientX-r.left-vx)/vs-px/2, y=(clientY-r.top-vy)/vs-px/2;
+    var d=document.createElement('div');
+    var tid='t'+clientId+Date.now();
+    d.className='token '+type;
+    d.style.cssText='left:'+x+'px;top:'+y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
+    d.dataset.sz=sz; d.dataset.label=label; d.dataset.tokenid=tid; d.dataset.type=type;
+    if(cardid) d.dataset.cardid=cardid;
+    if(isImg&&content){ var i=new Image(); i.src=content; d.appendChild(i); }
+    else d.textContent=content;
+    var lbl=document.createElement('div'); lbl.className='tlbl'; lbl.textContent=label; d.appendChild(lbl);
+    d.addEventListener('mousedown',function(e){
+      if(e.button!==0||spc||editMode)return;
+      e.preventDefault(); e.stopPropagation(); hideCtx();
+      dtok=d; d.classList.add('drag');
+      window._dtok=d;
+      var r=d.getBoundingClientRect(); dox=(e.clientX-r.left)/vs; doy=(e.clientY-r.top)/vs;
+      window._dox=dox; window._doy=doy;
+    });
+    d.addEventListener('contextmenu',function(e){ e.preventDefault(); e.stopPropagation(); ctxTok=d; showCtx(e.clientX,e.clientY); });
+    tlayer.appendChild(d);
+    // Publicar en Firebase
+    db.ref('tokens/'+tid).set({
+      by:clientId, type:type, label:label, sz:sz, cardid:cardid||'',
+      portrait: isImg ? content : '',
+      emoji: isImg ? '' : content,
+      x:x, y:y
+    });
+    return d;
+  };
+
+  // Interceptar mkPCard para publicar carta
+  var _mkPCard = window.mkPCard;
+  window.mkPCard = function(type,name,sz,imgB64){
+    _mkPCard(type,name,sz,imgB64);
+    setTimeout(function(){
+      var cards = document.getElementById('hlist').querySelectorAll('.pc:not([data-remotecardid])');
+      if(cards.length) publicarCarta(cards[0], 'heroes');
+    }, 100);
+  };
+
+  // Interceptar mkMCard para publicar carta
+  var _mkMCard = window.mkMCard;
+  window.mkMCard = function(name,sz,imgB64){
+    _mkMCard(name,sz,imgB64);
+    setTimeout(function(){
+      var cards = document.getElementById('clist').querySelectorAll('.mc:not([data-remotecardid])');
+      if(cards.length) publicarCarta(cards[0], 'monsters');
+    }, 100);
+  };
+
+  // Eliminar token en Firebase
+  document.getElementById('ctx-del').addEventListener('click', function(){
+    if(ctxTok && ctxTok.dataset.tokenid){
+      db.ref('tokens/' + ctxTok.dataset.tokenid).remove();
+    }
+  });
+
+});
+</script>
+
 </body>
 </html>
