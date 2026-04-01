@@ -498,7 +498,20 @@ function mkPCard(type,name,sz,imgB64){
   card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
   card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:card.dataset.type,emoji:card.dataset.emoji,label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
   list.insertBefore(card,list.querySelectorAll('.apb')[0]);
-  if(window._db)window._db.ref('cards/'+cid).set({by:window._ME||'x',panel:'heroes',name:name,sz:sz,type:type,emoji:card.dataset.emoji,portrait:'',cardImg:imgB64||''});
+  if(window._db){
+    window._db.ref('cards/'+cid).set({by:window._ME||'x',panel:'heroes',name:name,sz:sz,type:type,emoji:card.dataset.emoji,portrait:'',cardImg:''});
+    if(imgB64){
+      var _hi=new Image();
+      _hi.onload=function(){
+        var _c=document.createElement('canvas');
+        var _r=Math.min(512/_hi.naturalWidth,512/_hi.naturalHeight,1);
+        _c.width=Math.round(_hi.naturalWidth*_r);_c.height=Math.round(_hi.naturalHeight*_r);
+        _c.getContext('2d').drawImage(_hi,0,0,_c.width,_c.height);
+        window._db.ref('cards/'+cid).update({cardImg:_c.toDataURL('image/jpeg',.8)});
+      };
+      _hi.src=imgB64;
+    }
+  }
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 document.getElementById('fmo').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;loadCardImage(f,function(b64){mkMCard(f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});e.target.value='';});
@@ -506,13 +519,28 @@ function mkMCard(name,sz,imgB64){
   var list=document.getElementById('clist'),cid='c'+(++cardCounter);
   var card=document.createElement('div');card.className='mc';card.dataset.cardid=cid;card.dataset.name=name;card.dataset.sz=sz||'mediano';card.dataset.type='enemy';card.dataset.emoji='👹';
   var ci=document.createElement('div');ci.className='ci';if(imgB64){var img=new Image();img.src=imgB64;ci.appendChild(img);}else ci.textContent='👹';
+  // Comprimir imagen para Firebase (max 512x512, jpeg 80%)
+  if(imgB64){
+    var tmpImg=new Image();
+    tmpImg.onload=function(){
+      var canvas=document.createElement('canvas');
+      var MAX=512;
+      var ratio=Math.min(MAX/tmpImg.naturalWidth,MAX/tmpImg.naturalHeight,1);
+      canvas.width=Math.round(tmpImg.naturalWidth*ratio);
+      canvas.height=Math.round(tmpImg.naturalHeight*ratio);
+      canvas.getContext('2d').drawImage(tmpImg,0,0,canvas.width,canvas.height);
+      var compressed=canvas.toDataURL('image/jpeg',.8);
+      if(window._db)window._db.ref('scenes/'+currentSceneId+'/monsters/'+cid).update({cardImg:compressed});
+    };
+    tmpImg.src=imgB64;
+  }
   var cn=document.createElement('div');cn.className='cn';cn.textContent=name;
   var cs=document.createElement('div');cs.className='csz';cs.textContent=(sz||'mediano')+' · '+SZD[sz||'mediano'].f;
   card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
   card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
   card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
   list.insertBefore(card,list.querySelector('.amb'));
-  if(window._db)window._db.ref('scenes/'+currentSceneId+'/monsters/'+cid).set({by:window._ME||'x',name:name,sz:sz||'mediano',emoji:'👹',portrait:'',cardImg:imgB64||''});
+  if(window._db)window._db.ref('scenes/'+currentSceneId+'/monsters/'+cid).set({by:window._ME||'x',name:name,sz:sz||'mediano',emoji:'👹',portrait:'',cardImg:''});
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 
