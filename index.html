@@ -462,7 +462,7 @@ document.getElementById('cpb-sz').addEventListener('click',function(){
   }
   toast('Tamaño actualizado');
 });
-document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
+document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;if(cropTargetCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
 document.getElementById('cpb-del').addEventListener('click',function(){if(!selCard)return;if(!confirm('¿Eliminar esta carta?'))return;if(window._db&&selCard.dataset.cardid&&!selCard.dataset.remote)window._db.ref('cards/'+selCard.dataset.cardid).remove();selCard.remove();selCard=null;cpanel.classList.remove('on');});
 document.addEventListener('click',function(e){if(!e.target.closest('.pc,.mc,#cpanel')){if(selCard)selCard.classList.remove('sel');selCard=null;cpanel.classList.remove('on');}});
 
@@ -471,7 +471,7 @@ var cropSrc=document.getElementById('crop-source'),cropSelEl=document.getElement
 document.getElementById('fportrait').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){cropB64=ev.target.result;cropSrc.src=cropB64;cropSelEl.style.display='none';cropRect={x:0,y:0,w:0,h:0};document.getElementById('crop-overlay').classList.add('on');};fr.readAsDataURL(f);e.target.value='';});
 cropCont.addEventListener('mousedown',function(e){var r=cropCont.getBoundingClientRect();cropSX=e.clientX-r.left;cropSY=e.clientY-r.top;cropDragging=true;cropRect={x:cropSX,y:cropSY,w:0,h:0};cropSelEl.style.display='block';cropSelEl.style.left=cropSX+'px';cropSelEl.style.top=cropSY+'px';cropSelEl.style.width='0';cropSelEl.style.height='0';e.preventDefault();e.stopPropagation();});
 function doCropMove(e){if(!cropDragging)return;var r=cropCont.getBoundingClientRect();var cx=Math.max(0,Math.min(r.width,e.clientX-r.left)),cy=Math.max(0,Math.min(r.height,e.clientY-r.top));cropRect.x=Math.min(cropSX,cx);cropRect.y=Math.min(cropSY,cy);cropRect.w=Math.abs(cx-cropSX);cropRect.h=Math.abs(cy-cropSY);cropSelEl.style.left=cropRect.x+'px';cropSelEl.style.top=cropRect.y+'px';cropSelEl.style.width=cropRect.w+'px';cropSelEl.style.height=cropRect.h+'px';}
-function closeCrop(){document.getElementById('crop-overlay').classList.remove('on');cropB64=null;}
+function closeCrop(){document.getElementById('crop-overlay').classList.remove('on');cropB64=null;cropTargetCard=null;}
 function confirmCrop(){
   var tc=cropTargetCard;if(!tc||!cropB64){closeCrop();return;}
   var useFull=(cropRect.w<5||cropRect.h<5);
@@ -1038,11 +1038,16 @@ window.addEventListener('load',function(){
   console.log('Firebase OK id:',window._ME);toast('🔥 Multijugador activo');
 
   // CARTAS
-  db.ref('cards').on('child_added',function(snap){
-    var d=snap.val();if(!d||d.by===window._ME)return;
-    if(document.querySelector('[data-cardid="'+snap.key+'"]'))return;
-    if(d.panel==='heroes')addRHero(d,snap.key);else addRMonster(d,snap.key);
-  });
+  // Delay card listener so local DOM is ready before child_added fires
+  setTimeout(function(){
+    db.ref('cards').on('child_added',function(snap){
+      var d=snap.val();if(!d)return;
+      if(document.querySelector('[data-cardid="'+snap.key+'"]'))return;
+      if(d.by===window._ME)return;
+      if(!d.name||!d.panel)return; // ignore empty/corrupt entries
+      if(d.panel==='heroes')addRHero(d,snap.key);else addRMonster(d,snap.key);
+    });
+  },800);
   db.ref('cards').on('child_changed',function(snap){
     var d=snap.val();if(!d||d.by===window._ME)return;
     var card=document.querySelector('[data-cardid="'+snap.key+'"]');if(!card)return;
@@ -1159,8 +1164,10 @@ window.addEventListener('load',function(){
     // MONSTRUOS DE ESCENA
     var monRef=sceneRef.child('monsters');
     var h7=monRef.on('child_added',function(snap){
-      var d=snap.val();if(!d||d.by===window._ME)return;
+      var d=snap.val();if(!d)return;
+      // Ignorar si ya existe la carta (la creamos nosotros o ya se restauró)
       if(document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]'))return;
+      if(d.by===window._ME)return;
       var list=document.getElementById('clist');
       var card=document.createElement('div');card.className='mc';
       card.dataset.cardid=snap.key;card.dataset.remote='1';
@@ -1225,6 +1232,13 @@ window.addEventListener('load',function(){
     el.dataset.sz=d.sz;el.dataset.label=d.label;el.dataset.tokenid=tid;el.dataset.type=d.type||'enemy';el.dataset.cardid=d.cardid||'';
     if(d.portrait){var i=new Image();i.src=d.portrait;el.appendChild(i);}else el.textContent=d.emoji||'👹';
     var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=d.label;el.appendChild(lbl);
+    // Aplicar invisibilidad si corresponde
+    if(d.invisible){
+      el.classList.add('invisible-tok');
+      el.dataset.invisible='1';
+      if(isDM) el.classList.add('dm-view');
+      else el.style.display='none';
+    }
     el.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=el;el.classList.add('drag');var r=el.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
     el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=el;showCtx(e.clientX,e.clientY);});
     tlayer.appendChild(el);
