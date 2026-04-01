@@ -309,6 +309,43 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 </div>
 <input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
 <input type="file" id="f-fx" accept="audio/*" style="display:none">
+<!-- PANEL DE DADOS -->
+<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
+<div id="dice-panel">
+  <div id="dice-header">
+    <h2>🎲 DADOS</h2>
+    <button id="dice-private-btn" title="Modo privado — solo el DM ve la tirada">🔒 Privado</button>
+  </div>
+  <div id="dice-body">
+    <div id="dice-grid">
+      <div class="die-btn" onclick="rollDie(4)"><span class="die-icon">🔺</span><span class="die-label">d4</span></div>
+      <div class="die-btn" onclick="rollDie(6)"><span class="die-icon">⬡</span><span class="die-label">d6</span></div>
+      <div class="die-btn" onclick="rollDie(8)"><span class="die-icon">🔷</span><span class="die-label">d8</span></div>
+      <div class="die-btn" onclick="rollDie(10)"><span class="die-icon">🔟</span><span class="die-label">d10</span></div>
+      <div class="die-btn" onclick="rollDie(12)"><span class="die-icon">⬠</span><span class="die-label">d12</span></div>
+      <div class="die-btn" onclick="rollDie(20)"><span class="die-icon">🎯</span><span class="die-label">d20</span></div>
+      <div class="die-btn" onclick="rollDie(100)"><span class="die-icon">💯</span><span class="die-label">d100</span></div>
+      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon">🎲</span><span class="die-label">multi</span></div>
+    </div>
+    <div id="dice-modifier">
+      <label>Modificador:</label>
+      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
+    </div>
+    <div id="dice-result-box">
+      <span id="dice-result-num">—</span>
+      <div id="dice-result-detail"></div>
+    </div>
+    <div id="dice-history"></div>
+  </div>
+</div>
+
+<!-- NOTIFICACIÓN DE TIRADA -->
+<div id="dice-notification">
+  <div id="dn-who"></div>
+  <div id="dn-dice"></div>
+  <div id="dn-result"></div>
+  <div id="dn-detail"></div>
+</div>
 <script>
 var CELL=26;
 var SZL=['diminuto','pequeño','mediano','grande','enorme','gargantuesco'];
@@ -1280,44 +1317,6 @@ window.addEventListener('load', function(){
 });
 </script>
 
-
-<!-- PANEL DE DADOS -->
-<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
-<div id="dice-panel">
-  <div id="dice-header">
-    <h2>🎲 DADOS</h2>
-    <button id="dice-private-btn" title="Modo privado — solo el DM ve la tirada">🔒 Privado</button>
-  </div>
-  <div id="dice-body">
-    <div id="dice-grid">
-      <div class="die-btn" onclick="rollDie(4)"><span class="die-icon">🔺</span><span class="die-label">d4</span></div>
-      <div class="die-btn" onclick="rollDie(6)"><span class="die-icon">⬡</span><span class="die-label">d6</span></div>
-      <div class="die-btn" onclick="rollDie(8)"><span class="die-icon">🔷</span><span class="die-label">d8</span></div>
-      <div class="die-btn" onclick="rollDie(10)"><span class="die-icon">🔟</span><span class="die-label">d10</span></div>
-      <div class="die-btn" onclick="rollDie(12)"><span class="die-icon">⬠</span><span class="die-label">d12</span></div>
-      <div class="die-btn" onclick="rollDie(20)"><span class="die-icon">🎯</span><span class="die-label">d20</span></div>
-      <div class="die-btn" onclick="rollDie(100)"><span class="die-icon">💯</span><span class="die-label">d100</span></div>
-      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon">🎲</span><span class="die-label">multi</span></div>
-    </div>
-    <div id="dice-modifier">
-      <label>Modificador:</label>
-      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
-    </div>
-    <div id="dice-result-box">
-      <span id="dice-result-num">—</span>
-      <div id="dice-result-detail"></div>
-    </div>
-    <div id="dice-history"></div>
-  </div>
-</div>
-
-<!-- NOTIFICACIÓN DE TIRADA -->
-<div id="dice-notification">
-  <div id="dn-who"></div>
-  <div id="dn-dice"></div>
-  <div id="dn-result"></div>
-  <div id="dn-detail"></div>
-</div>
 
 
 <script>
