@@ -155,234 +155,65 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .fx-add:hover{color:#c9a84c;}
 
 /* ── PANEL DE DADOS ── */
-#dice-toggle{position:fixed;bottom:70px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+#dice-toggle{position:fixed;bottom:70px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
 #dice-toggle:hover{background:#3d2d12;}
-#dice-panel{position:fixed;bottom:120px;right:20px;width:300px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);}
+#dice-panel{position:fixed;bottom:130px;right:20px;width:340px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);}
 #dice-panel.open{display:flex;}
-#dice-header{padding:10px 14px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-#dice-header h2{font-size:12px;color:#c9a84c;letter-spacing:2px;flex:1;}
-#dice-private-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#8a6a30;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:1px;}
+#dice-header{padding:12px 16px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+#dice-header h2{font-size:16px;color:#c9a84c;letter-spacing:2px;flex:1;}
+#dice-private-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#8a6a30;font-size:12px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:1px;}
 #dice-private-btn.on{background:#5c3d1a;border-color:#c9a84c;color:#c9a84c;}
-#dice-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
-#dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.die-btn{background:#1a1209;border:1px solid #3d2d12;border-radius:6px;padding:10px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s;}
+#dice-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
+#dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.die-btn{background:#1a1209;border:1px solid #3d2d12;border-radius:8px;padding:12px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s,transform .1s;}
 .die-btn:hover{background:#2a1f0e;border-color:#c9a84c;}
-.die-btn:active{background:#3d2d12;transform:scale(.95);}
-.die-icon{font-size:22px;display:block;margin-bottom:2px;}
-.die-label{font-size:9px;color:#8a6a30;letter-spacing:1px;font-family:Georgia,serif;}
-#dice-modifier{display:flex;align-items:center;gap:8px;}
-#dice-modifier label{font-size:10px;color:#8a6a30;letter-spacing:1px;flex-shrink:0;}
-#dice-mod-val{width:60px;background:#1a1209;border:1px solid #3d2d12;color:#e8d5a3;padding:4px 8px;border-radius:4px;font-family:Georgia,serif;font-size:12px;text-align:center;}
-#dice-result-box{background:#1a1209;border:1px solid #2a1f0e;border-radius:6px;padding:10px 12px;text-align:center;}
-#dice-result-num{font-size:36px;color:#c9a84c;font-family:Georgia,serif;display:block;line-height:1;}
-#dice-result-detail{font-size:10px;color:#8a6a30;margin-top:4px;letter-spacing:.5px;}
-#dice-history{max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+.die-btn:active{transform:scale(.92);}
+.die-icon{width:44px;height:44px;display:block;margin:0 auto 4px;object-fit:contain;}
+.die-icon-emoji{font-size:36px;display:block;line-height:1;margin-bottom:4px;}
+.die-label{font-size:14px;color:#8a6a30;letter-spacing:1px;font-family:Georgia,serif;font-weight:bold;}
+#dice-modifier{display:flex;align-items:center;gap:10px;}
+#dice-modifier label{font-size:14px;color:#8a6a30;letter-spacing:1px;flex-shrink:0;}
+#dice-mod-val{width:70px;background:#1a1209;border:1px solid #3d2d12;color:#e8d5a3;padding:5px 8px;border-radius:4px;font-family:Georgia,serif;font-size:16px;text-align:center;}
+#dice-result-box{background:#1a1209;border:1px solid #2a1f0e;border-radius:6px;padding:12px;text-align:center;}
+#dice-result-num{font-size:48px;color:#c9a84c;font-family:Georgia,serif;display:block;line-height:1;}
+#dice-result-detail{font-size:14px;color:#8a6a30;margin-top:6px;letter-spacing:.5px;}
+#dice-history{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
 #dice-history::-webkit-scrollbar{width:3px;}
 #dice-history::-webkit-scrollbar-thumb{background:#2a1f0e;}
-.dice-log{font-size:10px;color:#8a6a30;padding:3px 0;border-bottom:1px solid #0f0c08;display:flex;justify-content:space-between;font-family:Georgia,serif;}
+.dice-log{font-size:13px;color:#8a6a30;padding:4px 0;border-bottom:1px solid #0f0c08;display:flex;justify-content:space-between;font-family:Georgia,serif;}
 .dice-log .dl-who{color:#5c3d1a;}
-.dice-log .dl-result{color:#c9a84c;font-size:12px;}
+.dice-log .dl-result{color:#c9a84c;font-size:15px;}
 .dice-log.private{color:#3d2d12;}
 .dice-log.private .dl-result{color:#5c3d1a;}
 
-/* Notificación de tirada en el tablero */
-#dice-notification{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(13,10,5,.95);border:1px solid #c9a84c;border-radius:8px;padding:16px 28px;z-index:950;display:none;text-align:center;pointer-events:none;}
-#dice-notification.show{display:block;animation:diceNotifAnim .3s ease;}
-@keyframes diceNotifAnim{from{transform:translate(-50%,-50%) scale(.7);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
-#dn-who{font-size:11px;color:#8a6a30;letter-spacing:1px;margin-bottom:4px;}
-#dn-dice{font-size:13px;color:#5c3d1a;margin-bottom:6px;}
-#dn-result{font-size:52px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
-#dn-detail{font-size:11px;color:#8a6a30;margin-top:4px;}
-</style>
-</head>
-<body>
-<div id="app">
-  <div id="topbar">
-    <h1>⚔ Battle Map</h1>
-    <span id="hint-mode">🔍 Ver · rueda=zoom · espacio+drag=mover</span>
-    <button class="btn" id="mbtn" onclick="toggleMode()">✏ Editar mapa</button>
-    <button class="btn" onclick="resetView()">⌖ Reset</button>
-    <button class="btn" onclick="document.getElementById('fm').click()">🗺 Subir mapa</button>
-  </div>
-  <div id="ptop">
-    <div id="ptop-lbl">HÉROES</div>
-    <div id="hlist">
-      <div class="apb" onclick="document.getElementById('fp').click()"><span style="font-size:32px">+</span><span>Jugador</span></div>
-      <div class="apb al" onclick="document.getElementById('fa').click()"><span style="font-size:32px">+</span><span>Aliado</span></div>
-    </div>
-  </div>
-  <div id="mid">
-    <div id="bwrap">
-      <canvas id="gc"></canvas>
-      <div id="bi"><img id="mi"/><div id="tlayer"></div></div>
-      <div id="eov"><div id="eb"></div><div id="sh"></div></div>
-      <div id="bighint">🗺 Sube un mapa · Clic en carta = opciones · Arrastra carta = colocar token<br>Clic derecho sobre token = opciones</div>
-    </div>
-    <div id="cpanel">
-      <div id="cp-img"><span id="cp-em"></span></div>
-      <div id="cp-name">—</div>
-      <div id="cp-sz">—</div>
-      <hr>
-      <button class="cpb" id="cpb-ren">✏ Renombrar</button>
-      <button class="cpb" id="cpb-sz">⟳ Cambiar tamaño</button>
-      <button class="cpb" id="cpb-portrait">🖼 Asignar retrato</button>
-      <button class="cpb del" id="cpb-del">🗑 Eliminar carta</button>
-      <div id="cp-tip">El retrato se usa en<br>los tokens del tablero.<br>La carta no cambia.</div>
-    </div>
-  </div>
-  <div id="pbot">
-    <div id="pbot-lbl">⚔ ENCUENTROS · clic = opciones · arrastra = colocar token</div>
-    <div id="clist">
-      <div class="amb" onclick="document.getElementById('fmo').click()"><span style="font-size:30px">+</span><span>Monstruo</span></div>
-    </div>
-  </div>
-</div>
-
-<div id="crop-overlay">
-  <div id="crop-title">✂ SELECCIONAR RETRATO</div>
-  <div id="crop-hint">Arrastra para seleccionar área · Sin selección = imagen completa</div>
-  <div id="crop-container">
-    <img id="crop-source"/>
-    <div id="crop-sel"></div>
-  </div>
-  <div id="crop-btns">
-    <button class="cbtn" onclick="closeCrop()">Cancelar</button>
-    <button class="cbtn primary" onclick="confirmCrop()">✔ Usar esta área</button>
-  </div>
-</div>
-
-<div id="ctx">
-  <button id="ctx-ren">✏ Renombrar</button>
-  <button id="ctx-sz">⟳ Cambiar tamaño</button>
-  <hr>
-  <button id="ctx-del" style="color:#ff9a9a;">🗑 Eliminar token</button>
-</div>
-<div id="ghost"></div>
-<div id="toast"></div>
-
-<input type="file" id="fm"        accept="image/*" style="display:none">
-<input type="file" id="fmo"       accept="image/*" style="display:none">
-<input type="file" id="fp"        accept="image/*" style="display:none">
-<input type="file" id="fa"        accept="image/*" style="display:none">
-<input type="file" id="fportrait" accept="image/*" style="display:none">
-
-<!-- AUDIO PANEL -->
-<button id="audio-toggle" title="Panel de audio (M)">🎵</button>
-<div id="audio-panel">
-  <div id="audio-header">
-    <h2>🎵 AUDIO — MASTER</h2>
-    <div id="audio-tabs">
-      <button class="atab on" onclick="showAudioTab('music',this)">Música</button>
-      <button class="atab" onclick="showAudioTab('fx',this)">Efectos</button>
-    </div>
-  </div>
-  <div id="audio-body">
-    <!-- NOW PLAYING -->
-    <div id="now-playing">
-      <div id="np-title">Sin pista seleccionada</div>
-      <div id="np-controls">
-        <button class="np-btn" id="np-stop" onclick="audioStop()" title="Stop">⏹</button>
-        <button class="np-btn" id="np-play" onclick="audioPlayPause()" title="Play/Pause">▶</button>
-        <button class="np-btn" id="np-loop" onclick="audioToggleLoop()" title="Loop">🔁</button>
-        <input type="range" id="np-progress" min="0" max="100" value="0" oninput="audioSeek(this.value)">
-        <span id="np-time">0:00</span>
-      </div>
-      <div id="np-vol-row">
-        <span>🔊</span>
-        <input type="range" id="np-vol" min="0" max="100" value="70" oninput="audioVol(this.value)">
-        <div id="np-fade"><span>Fade</span><input type="range" id="np-fade-val" min="0" max="5" value="2" step="0.5"><span id="np-fade-label">2s</span></div>
-      </div>
-    </div>
-
-    <!-- TAB MÚSICA -->
-    <div id="tab-music">
-      <div id="lists-container"></div>
-      <button class="new-list-btn" onclick="createList()">+ Nueva lista</button>
-    </div>
-
-    <!-- TAB EFECTOS -->
-    <div id="tab-fx" style="display:none">
-      <div class="fx-grid" id="fx-grid"></div>
-      <button class="new-list-btn" style="margin-top:8px" onclick="addFxBtn()">+ Añadir efecto</button>
-    </div>
-  </div>
-</div>
-<input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
-<input type="file" id="f-fx" accept="audio/*" style="display:none">
-<!-- PANEL DE DADOS -->
-<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
-<div id="dice-panel">
-  <div id="dice-header">
-    <h2>🎲 DADOS</h2>
-    <button id="dice-private-btn" title="Modo privado — solo el DM ve la tirada">🔒 Privado</button>
-  </div>
-  <div id="dice-body">
-    <div id="dice-grid">
-      <div class="die-btn" onclick="rollDie(4)"><span class="die-icon">🔺</span><span class="die-label">d4</span></div>
-      <div class="die-btn" onclick="rollDie(6)"><span class="die-icon">⬡</span><span class="die-label">d6</span></div>
-      <div class="die-btn" onclick="rollDie(8)"><span class="die-icon">🔷</span><span class="die-label">d8</span></div>
-      <div class="die-btn" onclick="rollDie(10)"><span class="die-icon">🔟</span><span class="die-label">d10</span></div>
-      <div class="die-btn" onclick="rollDie(12)"><span class="die-icon">⬠</span><span class="die-label">d12</span></div>
-      <div class="die-btn" onclick="rollDie(20)"><span class="die-icon">🎯</span><span class="die-label">d20</span></div>
-      <div class="die-btn" onclick="rollDie(100)"><span class="die-icon">💯</span><span class="die-label">d100</span></div>
-      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon">🎲</span><span class="die-label">multi</span></div>
-    </div>
-    <div id="dice-modifier">
-      <label>Modificador:</label>
-      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
-    </div>
-    <div id="dice-result-box">
-      <span id="dice-result-num">—</span>
-      <div id="dice-result-detail"></div>
-    </div>
-    <div id="dice-history"></div>
-  </div>
-</div>
-
-<!-- NOTIFICACIÓN DE TIRADA -->
-<div id="dice-notification">
-  <div id="dn-who"></div>
-  <div id="dn-dice"></div>
-  <div id="dn-result"></div>
-  <div id="dn-detail"></div>
-</div>
-<script>
-var CELL=26;
-var SZL=['diminuto','pequeño','mediano','grande','enorme','gargantuesco'];
-var SZD={diminuto:{f:'2,5×2,5 ft',c:.5},'pequeño':{f:'5×5 ft',c:1},mediano:{f:'5×5 ft',c:1},grande:{f:'10×10 ft',c:2},enorme:{f:'15×15 ft',c:3},gargantuesco:{f:'20×20 ft',c:4}};
-function spx(sz){return Math.round((SZD[sz]?SZD[sz].c:1)*CELL);}
-
-var bwrap=document.getElementById('bwrap');
-var bi=document.getElementById('bi');
-var gc=document.getElementById('gc');
-var miEl=document.getElementById('mi');
-var tlayer=document.getElementById('tlayer');
-var eov=document.getElementById('eov');
-var ghost=document.getElementById('ghost');
-var cpanel=document.getElementById('cpanel');
-var ctxEl=document.getElementById('ctx');
-
-var vx=0,vy=0,vs=1,mw=0,mh=0,mx=0,my=0,ms=1;
-var editMode=false,spc=false;
-var panning=false,psx=0,psy=0,pvx=0,pvy=0;
-var edrag=false,escale=false,esx=0,esy=0,eox=0,eoy=0,esw=0;
-var dtok=null,dox=0,doy=0;
-var pdrag=null,pdata=null;
-var selCard=null,ctxTok=null;
-var cardCounter=0;
-var portraits={};       // cardid -> base64 del retrato (solo para tokens)
-var cropTargetCard=null; // carta bloqueada durante el flujo de retrato
-
-function drawGrid(){
-  var W=bwrap.clientWidth,H=bwrap.clientHeight;
-  if(gc.width!==W||gc.height!==H){gc.width=W;gc.height=H;}
-  var c=gc.getContext('2d');
-  c.clearRect(0,0,W,H);
-  c.strokeStyle='rgba(255,255,255,.1)';c.lineWidth=.5;
-  var cell=CELL*vs,ox=((vx%cell)+cell)%cell,oy=((vy%cell)+cell)%cell;
-  for(var x=ox-cell;x<=W;x+=cell){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}
-  for(var y=oy-cell;y<=H;y+=cell){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+/* Animación del dado */
+#dice-anim-overlay{position:fixed;inset:0;z-index:940;pointer-events:none;display:none;}
+#dice-anim-overlay.show{display:block;}
+#dice-anim-container{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
+#dice-anim-die{font-size:100px;display:block;text-align:center;animation:diceRoll .8s cubic-bezier(.36,.07,.19,.97) forwards;}
+#dice-anim-result{font-size:64px;color:#c9a84c;font-family:Georgia,serif;text-align:center;display:block;opacity:0;animation:diceReveal .4s .7s ease forwards;}
+#dice-anim-label{font-size:18px;color:#8a6a30;text-align:center;display:block;opacity:0;animation:diceReveal .3s .9s ease forwards;}
+#dice-anim-special{font-size:20px;text-align:center;display:block;opacity:0;animation:diceReveal .3s 1s ease forwards;}
+@keyframes diceRoll{
+  0%{transform:translateY(-120px) rotate(0deg);opacity:0;}
+  15%{opacity:1;}
+  40%{transform:translateY(20px) rotate(180deg);}
+  55%{transform:translateY(-10px) rotate(270deg);}
+  70%{transform:translateY(8px) rotate(330deg);}
+  82%{transform:translateY(-4px) rotate(355deg);}
+  90%{transform:translateY(2px) rotate(360deg);}
+  100%{transform:translateY(0) rotate(360deg);}
 }
+@keyframes diceReveal{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+
+/* Notificación pública */
+#dice-notification{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(13,10,5,.97);border:1px solid #c9a84c;border-radius:8px;padding:14px 28px;z-index:950;display:none;text-align:center;pointer-events:none;min-width:200px;}
+#dice-notification.show{display:block;animation:diceNotifIn .3s ease;}
+@keyframes diceNotifIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+#dn-who{font-size:13px;color:#8a6a30;letter-spacing:1px;margin-bottom:4px;}
+#dn-dice{font-size:14px;color:#5c3d1a;margin-bottom:6px;}
+#dn-result{font-size:56px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
+#dn-detail{font-size:14px;color:#8a6a30;margin-top:6px;}
 window.addEventListener('resize',drawGrid);drawGrid();
 
 function applyVP(){bi.style.transform='translate('+vx+'px,'+vy+'px) scale('+vs+')';updateEov();drawGrid();}
@@ -1048,6 +879,50 @@ function playFx(url,name){
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<!-- PANEL DE DADOS -->
+<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
+<div id="dice-panel">
+  <div id="dice-header">
+    <h2>🎲 DADOS</h2>
+    <button id="dice-private-btn">🔒 Privado</button>
+  </div>
+  <div id="dice-body">
+    <div id="dice-grid">
+      <div class="die-btn" onclick="rollDie(4,'d4','🔺')"><span class="die-icon-emoji">🔺</span><span class="die-label">d4</span></div>
+      <div class="die-btn" onclick="rollDie(6,'d6','⬛')"><span class="die-icon-emoji">⬛</span><span class="die-label">d6</span></div>
+      <div class="die-btn" onclick="rollDie(8,'d8','🔷')"><span class="die-icon-emoji">🔷</span><span class="die-label">d8</span></div>
+      <div class="die-btn" onclick="rollDie(10,'d10','🔟')"><span class="die-icon-emoji">🔟</span><span class="die-label">d10</span></div>
+      <div class="die-btn" onclick="rollDie(12,'d12','⬠')"><span class="die-icon-emoji">⬠</span><span class="die-label">d12</span></div>
+      <div class="die-btn" onclick="rollDie(20,'d20','🎯')"><span class="die-icon-emoji">🎯</span><span class="die-label">d20</span></div>
+      <div class="die-btn" onclick="rollDie(100,'d100','💯')"><span class="die-icon-emoji">💯</span><span class="die-label">d100</span></div>
+      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon-emoji">🎲</span><span class="die-label">multi</span></div>
+    </div>
+    <div id="dice-modifier">
+      <label>Modificador:</label>
+      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
+    </div>
+    <div id="dice-result-box">
+      <span id="dice-result-num">—</span>
+      <div id="dice-result-detail"></div>
+    </div>
+    <div id="dice-history"></div>
+  </div>
+</div>
+<div id="dice-anim-overlay">
+  <div id="dice-anim-container">
+    <span id="dice-anim-die"></span>
+    <span id="dice-anim-result"></span>
+    <span id="dice-anim-label"></span>
+    <span id="dice-anim-special"></span>
+  </div>
+</div>
+<div id="dice-notification">
+  <div id="dn-who"></div>
+  <div id="dn-dice"></div>
+  <div id="dn-result"></div>
+  <div id="dn-detail"></div>
+</div>
 <script>
 window.addEventListener('load', function(){
   var cfg={
@@ -1323,8 +1198,14 @@ window.addEventListener('load', function(){
 // ── SISTEMA DE DADOS ──
 var dicePrivate=false;
 var dicePlayerName=null;
+var diceAnimTimer=null;
+var notifTimer=null;
 
-// Pedir nombre al jugador la primera vez
+// Iconos por tipo de dado — reemplaza las URLs por tus imágenes
+var diceIcons={
+  d4:'🔺', d6:'⬛', d8:'🔷', d10:'🔟', d12:'⬠', d20:'🎯', d100:'💯'
+};
+
 function getDicePlayerName(){
   if(!dicePlayerName){
     dicePlayerName=prompt('¿Cómo te llamas? (aparecerá en las tiradas)','Jugador');
@@ -1333,7 +1214,7 @@ function getDicePlayerName(){
   return dicePlayerName;
 }
 
-// Toggle panel con tecla D
+// Toggle panel tecla D
 document.addEventListener('keydown',function(e){
   if(e.code==='KeyD'&&e.target.tagName!=='INPUT'){
     document.getElementById('dice-panel').classList.toggle('open');
@@ -1350,29 +1231,38 @@ document.getElementById('dice-private-btn').addEventListener('click',function(){
   this.textContent=dicePrivate?'🔒 Privado':'🔓 Público';
 });
 
-// Tirar dado
-function rollDie(sides){
+// ── TIRAR DADO ──
+function rollDie(sides,diceLabel,icon){
   var mod=parseInt(document.getElementById('dice-mod-val').value)||0;
   var roll=Math.floor(Math.random()*sides)+1;
   var total=roll+mod;
   var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-  var detail='d'+sides+(modStr?modStr:'');
-  if(mod!==0) detail+=' = '+roll+(modStr);
+  var detail=diceLabel+(modStr?modStr:'')+(mod!==0?' = '+roll+modStr:'');
+  var special='';
+  if(sides===20){
+    if(roll===20) special='⚡ ¡CRÍTICO!';
+    if(roll===1)  special='💀 ¡PIFIA!';
+  }
 
-  showDiceResult(total, detail, sides, roll);
+  // Animación local
+  playDiceAnimation(icon||'🎲', total, diceLabel+(modStr||''), special, sides, roll);
+
+  // Actualizar panel
+  updateDicePanel(total, detail, sides, roll);
 
   if(!dicePrivate){
     var who=getDicePlayerName();
-    publishRoll(who, sides, roll, mod, total);
+    addToHistory(who, diceLabel+(modStr||''), total, false, special);
+    publishRoll(who, sides, roll, mod, total, 1, [roll], diceLabel, icon);
   } else {
-    addToHistory('DM (privado)', 'd'+sides, total, true);
+    addToHistory('DM (privado)', diceLabel+(modStr||''), total, true, special);
   }
 }
 
-// Tirada múltiple
+// ── TIRADA MÚLTIPLE ──
 function rollMultiple(){
-  var input=prompt('Tirada (ej: 2d6+3, 1d20-1):','2d6+3');
-  if(!input)return;
+  var input=prompt('Tirada (ej: 2d6+3, 1d20-1):','2d6');
+  if(!input) return;
   var match=input.match(/(\d+)d(\d+)([+-]\d+)?/i);
   if(!match){toast('Formato no válido. Usa: 2d6+3');return;}
   var num=parseInt(match[1])||1;
@@ -1383,108 +1273,136 @@ function rollMultiple(){
   var sum=rolls.reduce(function(a,b){return a+b;},0);
   var total=sum+mod;
   var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-  var detail=num+'d'+sides+(modStr||'')+' = ['+rolls.join(',')+']'+(mod?modStr:'');
+  var diceLabel=num+'d'+sides;
+  var detail=diceLabel+(modStr||'')+' = ['+rolls.join(',')+']'+(mod?modStr:'');
 
-  showDiceResult(total, detail, sides, sum);
+  playDiceAnimation('🎲', total, diceLabel+(modStr||''), '', sides, sum);
+  updateDicePanel(total, detail, sides, sum);
 
   if(!dicePrivate){
     var who=getDicePlayerName();
-    publishRoll(who, sides, sum, mod, total, num, rolls);
+    addToHistory(who, diceLabel+(modStr||''), total, false, '');
+    publishRoll(who, sides, sum, mod, total, num, rolls, diceLabel, '🎲');
   } else {
-    addToHistory('DM (privado)', num+'d'+sides, total, true);
+    addToHistory('DM (privado)', diceLabel+(modStr||''), total, true, '');
   }
 }
 
-// Mostrar resultado local
-function showDiceResult(total, detail, sides, raw){
-  document.getElementById('dice-result-num').textContent=total;
-  document.getElementById('dice-result-detail').textContent=detail;
+// ── ANIMACIÓN REBOTE ──
+function playDiceAnimation(icon, result, label, special, sides, raw){
+  var overlay=document.getElementById('dice-anim-overlay');
+  var dieEl=document.getElementById('dice-anim-die');
+  var resEl=document.getElementById('dice-anim-result');
+  var lblEl=document.getElementById('dice-anim-label');
+  var spcEl=document.getElementById('dice-anim-special');
 
-  // Colores especiales para 1 y máximo en d20
+  // Reset animación
+  dieEl.style.animation='none';
+  resEl.style.animation='none';
+  lblEl.style.animation='none';
+  spcEl.style.animation='none';
+  overlay.classList.remove('show');
+
+  // Color resultado
+  var color='#c9a84c';
+  if(sides===20&&raw===20) color='#4aff8a';
+  if(sides===20&&raw===1)  color='#ff4a4a';
+
+  // Trigger reflow
+  void overlay.offsetWidth;
+
+  dieEl.textContent=icon;
+  resEl.textContent=result;
+  resEl.style.color=color;
+  lblEl.textContent=label;
+  spcEl.textContent=special;
+  spcEl.style.color=color;
+
+  // Restaurar animaciones
+  dieEl.style.animation='';
+  resEl.style.animation='';
+  lblEl.style.animation='';
+  spcEl.style.animation='';
+
+  overlay.classList.add('show');
+
+  clearTimeout(diceAnimTimer);
+  diceAnimTimer=setTimeout(function(){
+    overlay.classList.remove('show');
+  },2200);
+}
+
+// ── ACTUALIZAR PANEL ──
+function updateDicePanel(total, detail, sides, raw){
   var el=document.getElementById('dice-result-num');
+  el.textContent=total;
   el.style.color='#c9a84c';
-  if(sides===20){
-    if(raw===20) el.style.color='#4aff8a';
-    if(raw===1)  el.style.color='#ff4a4a';
-  }
+  if(sides===20&&raw===20) el.style.color='#4aff8a';
+  if(sides===20&&raw===1)  el.style.color='#ff4a4a';
+  document.getElementById('dice-result-detail').textContent=detail;
 }
 
-// Publicar tirada en Firebase
-function publishRoll(who, sides, roll, mod, total, num, rolls){
-  if(window._db){
-    var key=window._db.ref('rolls').push().key;
-    window._db.ref('rolls/'+key).set({
-      who:who,
-      sides:sides,
-      roll:roll,
-      mod:mod,
-      total:total,
-      num:num||1,
-      rolls:rolls||[roll],
-      ts:Date.now()
-    });
-  }
-  // También mostrar localmente en historial
-  var detail='d'+sides+(mod>0?'+'+mod:mod<0?''+mod:'');
-  addToHistory(who, detail, total, false);
-}
-
-// Historial local
-function addToHistory(who, dice, total, isPrivate){
+// ── HISTORIAL ──
+function addToHistory(who, dice, total, isPrivate, special){
   var history=document.getElementById('dice-history');
   var entry=document.createElement('div');
   entry.className='dice-log'+(isPrivate?' private':'');
-  entry.innerHTML='<span class="dl-who">'+who+'</span><span>'+dice+'</span><span class="dl-result">'+total+'</span>';
+  var txt=special?' '+special:'';
+  entry.innerHTML='<span class="dl-who">'+who+'</span><span>'+dice+txt+'</span><span class="dl-result">'+total+'</span>';
   history.insertBefore(entry,history.firstChild);
-  // Máximo 20 entradas
   while(history.children.length>20) history.removeChild(history.lastChild);
 }
 
-// Escuchar tiradas de Firebase
+// ── PUBLICAR EN FIREBASE ──
+function publishRoll(who,sides,roll,mod,total,num,rolls,diceLabel,icon){
+  if(window._db){
+    var key=window._db.ref('rolls').push().key;
+    window._db.ref('rolls/'+key).set({
+      who:who,sides:sides,roll:roll,mod:mod||0,total:total,
+      num:num||1,rolls:rolls||[roll],
+      diceLabel:diceLabel||('d'+sides),
+      icon:icon||'🎲',
+      ts:Date.now()
+    });
+  }
+}
+
+// ── ESCUCHAR TIRADAS DE OTROS ──
 window.addEventListener('load',function(){
   if(!window._db) return;
-
-  // Limpiar tiradas viejas al conectar (solo las de hace más de 24h)
-  window._db.ref('rolls').on('child_added',function(snap){
-    var d=snap.val();
-    if(!d) return;
-    // Ignorar tiradas muy antiguas (más de 1 min al cargar)
-    if(Date.now()-d.ts>60000 && !window._diceReady) return;
-
-    var mod=d.mod||0;
-    var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-    var detail=(d.num>1?d.num:'')+'d'+d.sides+(modStr||'');
-    addToHistory(d.who, detail, d.total, false);
-
-    // Mostrar notificación en el tablero
-    showDiceNotification(d.who, detail, d.total, d.sides, d.roll);
-  });
-
-  // Marcar como listo tras un pequeño delay para ignorar historial previo
-  setTimeout(function(){window._diceReady=true;},1000);
+  setTimeout(function(){
+    window._db.ref('rolls').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
+      if(!window._diceReady) return;
+      var d=snap.val();
+      if(!d) return;
+      var mod=d.mod||0;
+      var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
+      var detail=d.diceLabel+(modStr||'');
+      var special='';
+      if(d.sides===20&&d.roll===20) special='⚡ ¡CRÍTICO!';
+      if(d.sides===20&&d.roll===1)  special='💀 ¡PIFIA!';
+      addToHistory(d.who, detail, d.total, false, special);
+      showPublicNotification(d.who, detail, d.total, d.sides, d.roll, special);
+    });
+    window._diceReady=true;
+  },1200);
 });
 
-// Notificación flotante en el tablero
-var notifTimer=null;
-function showDiceNotification(who, dice, total, sides, raw){
+// ── NOTIFICACIÓN PÚBLICA (para tiradas de otros) ──
+function showPublicNotification(who, dice, total, sides, raw, special){
   var notif=document.getElementById('dice-notification');
   document.getElementById('dn-who').textContent=who;
   document.getElementById('dn-dice').textContent=dice;
   document.getElementById('dn-result').textContent=total;
-
-  var detail='';
-  if(sides===20){
-    if(raw===20) detail='⚡ ¡CRÍTICO!';
-    else if(raw===1) detail='💀 ¡PIFIA!';
-  }
-  document.getElementById('dn-detail').textContent=detail;
-  document.getElementById('dn-result').style.color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';
-
+  document.getElementById('dn-detail').textContent=special||'';
+  var color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';
+  document.getElementById('dn-result').style.color=color;
+  notif.classList.remove('show');
+  void notif.offsetWidth;
   notif.classList.add('show');
   clearTimeout(notifTimer);
-  notifTimer=setTimeout(function(){notif.classList.remove('show');},3000);
+  notifTimer=setTimeout(function(){notif.classList.remove('show');},3500);
 }
 </script>
-
 </body>
 </html>
