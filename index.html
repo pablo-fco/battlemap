@@ -388,11 +388,10 @@ function resetView(){var W=bwrap.clientWidth,H=bwrap.clientHeight;if(mw>0&&mh>0)
 function applyMap(){miEl.style.left=mx+'px';miEl.style.top=my+'px';miEl.style.width=Math.round(mw*ms)+'px';miEl.style.height=Math.round(mh*ms)+'px';updateEov();}
 function updateEov(){if(!editMode||!miEl.src||miEl.style.display==='none'){eov.classList.remove('on');return;}eov.style.left=(vx+mx*vs)+'px';eov.style.top=(vy+my*vs)+'px';eov.style.width=(mw*ms*vs)+'px';eov.style.height=(mh*ms*vs)+'px';eov.classList.add('on');}
 
-document.getElementById('fm').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){var b64=ev.target.result;var t=new Image();t.onload=function(){mw=t.naturalWidth;mh=t.naturalHeight;ms=1;mx=0;my=0;miEl.src=b64;miEl.style.display='block';document.getElementById('bighint').style.display='none';applyMap();applyVP();toast('Mapa cargado');// Publicar mapa en Firebase
-if(window._db)window._db.ref('scenes/'+currentSceneId+'/map').set({src:b64,w:mw,h:mh,mx:mx,my:my,ms:ms,vx:vx,vy:vy,vs:vs});};t.src=b64;};fr.readAsDataURL(f);e.target.value='';});
+document.getElementById('fm').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){var b64=ev.target.result;var t=new Image();t.onload=function(){mw=t.naturalWidth;mh=t.naturalHeight;ms=1;mx=0;my=0;miEl.src=b64;miEl.style.display='block';document.getElementById('bighint').style.display='none';applyMap();applyVP();toast('Mapa cargado');saveMapToFirebase();};t.src=b64;};fr.readAsDataURL(f);e.target.value='';});
 function toggleMode(){editMode=!editMode;var b=document.getElementById('mbtn'),h=document.getElementById('hint-mode');if(editMode){b.classList.add('on');b.textContent='🔍 Modo Ver';h.textContent='✏ Editar · drag=mover · esquina=escalar · rueda=zoom';updateEov();}else{b.classList.remove('on');b.textContent='✏ Editar mapa';h.textContent='🔍 Ver · rueda=zoom · espacio+drag=mover';eov.classList.remove('on');}}
 
-bwrap.addEventListener('wheel',function(e){e.preventDefault();if(editMode){ms=Math.max(.05,Math.min(10,ms*(e.deltaY>0?.95:1.05)));applyMap();return;}var r=bwrap.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;var f=e.deltaY>0?.9:1.1,ns=Math.min(5,Math.max(.1,vs*f));vx=px-(px-vx)*(ns/vs);vy=py-(py-vy)*(ns/vs);vs=ns;applyVP();},{passive:false});
+bwrap.addEventListener('wheel',function(e){e.preventDefault();if(editMode){ms=Math.max(.05,Math.min(10,ms*(e.deltaY>0?.95:1.05)));applyMap();saveMapDebounced();return;}var r=bwrap.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;var f=e.deltaY>0?.9:1.1,ns=Math.min(5,Math.max(.1,vs*f));vx=px-(px-vx)*(ns/vs);vy=py-(py-vy)*(ns/vs);vs=ns;applyVP();saveMapDebounced();},{passive:false});
 document.getElementById('sh').addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();escale=true;esx=e.clientX;esw=mw*ms;});
 eov.addEventListener('mousedown',function(e){if(e.target.id==='sh')return;e.preventDefault();e.stopPropagation();edrag=true;esx=e.clientX;esy=e.clientY;eox=mx;eoy=my;});
 document.addEventListener('keydown',function(e){if(e.code==='Space'&&e.target.tagName!=='INPUT'){spc=true;e.preventDefault();}});
@@ -408,8 +407,9 @@ document.addEventListener('mousemove',function(e){
   if(cropDragging){doCropMove(e);}
 });
 document.addEventListener('mouseup',function(e){
+  if(edrag||escale) saveMapDebounced();
   edrag=false;escale=false;
-  if(panning){panning=false;bwrap.style.cursor='';}
+  if(panning){panning=false;bwrap.style.cursor='';saveMapDebounced();}
   if(dtok){
     if(window._db&&dtok.dataset.tokenid){
       var _px=parseInt(dtok.style.width)||spx(dtok.dataset.sz||'mediano');
@@ -856,6 +856,20 @@ function switchScene(sid){
 
 // Guardar automáticamente al cerrar/cambiar
 window.addEventListener('beforeunload',function(){saveCurrentScene();});
+
+
+function saveMapToFirebase(){
+  if(!window._db||!miEl.src||miEl.style.display==='none')return;
+  window._db.ref('scenes/'+currentSceneId+'/map').set({
+    src:miEl.src,w:mw,h:mh,mx:mx,my:my,ms:ms,vx:vx,vy:vy,vs:vs
+  });
+}
+// Guardar mapa con debounce al mover/escalar
+var _mapSaveTimer=null;
+function saveMapDebounced(){
+  clearTimeout(_mapSaveTimer);
+  _mapSaveTimer=setTimeout(saveMapToFirebase,800);
+}
 
 applyVP();
 window.portraits=portraits;
