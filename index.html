@@ -427,7 +427,7 @@ document.addEventListener('mouseup',function(e){
     }
     dtok.classList.remove('drag');dtok=null;
   }
-  if(pdrag){ghost.style.display='none';var r=bwrap.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var d=pdata;var portrait=d.cardid?portraits[d.cardid]:'';mkToken(d.type,portrait||d.emoji,d.label,e.clientX,e.clientY,d.sz,!!portrait,d.cardid,d.hidden||0);toast('"'+d.label+'" colocado');}pdrag=null;pdata=null;}
+  if(pdrag){ghost.style.display='none';var r=bwrap.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var d=pdata;var portrait=d.cardid?portraits[d.cardid]:'';console.log('mouseup drop: hidden=',d.hidden,'cardid=',d.cardid);mkToken(d.type,portrait||d.emoji,d.label,e.clientX,e.clientY,d.sz,!!portrait,d.cardid,d.hidden||0);toast('"'+d.label+'" colocado');}pdrag=null;pdata=null;}
   if(cropDragging){cropDragging=false;}
 });
 
@@ -573,6 +573,7 @@ function startDrag(e,data){
   if(data.cardid){
     var srcCard=document.querySelector('[data-cardid="'+data.cardid+'"]');
     data.hidden=srcCard&&srcCard.classList.contains('hidden')?1:0;
+    console.log('startDrag cardid:',data.cardid,'hidden:',data.hidden,'card found:',!!srcCard,'has hidden class:',srcCard&&srcCard.classList.contains('hidden'));
   } else {
     data.hidden=0;
   }
@@ -1040,6 +1041,24 @@ openCardPanel=function(card){
     btn.textContent=card.classList.contains('hidden')?'👁 Revelar carta':'👁 Ocultar carta';
   }
 };
+
+
+// DEBUG: detect when hidden class is removed from any card
+var _observer = new MutationObserver(function(mutations){
+  mutations.forEach(function(m){
+    if(m.type==='attributes' && m.attributeName==='class'){
+      var el=m.target;
+      var wasHidden=m.oldValue&&m.oldValue.includes('hidden');
+      var isHidden=el.classList.contains('hidden');
+      if(wasHidden && !isHidden){
+        console.log('HIDDEN CLASS REMOVED from card:', el.dataset.cardid, el.dataset.name, new Error().stack);
+      }
+    }
+  });
+});
+document.querySelectorAll('#hlist,#clist').forEach(function(list){
+  _observer.observe(list, {subtree:true, attributes:true, attributeOldValue:true, attributeFilter:['class']});
+});
 
 applyVP();
 window.portraits=portraits;
