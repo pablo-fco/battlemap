@@ -486,7 +486,7 @@ function mkMCard(name,sz,imgB64){
   card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
   card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
   list.insertBefore(card,list.querySelector('.amb'));
-  if(window._db)window._db.ref('cards/'+cid).set({by:window._ME||'x',panel:'monsters',name:name,sz:sz||'mediano',type:'enemy',emoji:'👹',portrait:'',cardImg:imgB64||''});
+  if(window._db)window._db.ref('scenes/'+currentSceneId+'/monsters/'+cid).set({by:window._ME||'x',name:name,sz:sz||'mediano',emoji:'👹',portrait:'',cardImg:imgB64||''});
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 
@@ -750,8 +750,8 @@ function saveCurrentScene(){
 function clearBoard(){
   document.querySelectorAll('.token').forEach(function(t){t.remove();});
   document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});
-  // Limpiar cartas de monstruos (no remotas — las locales de esta escena)
-  document.querySelectorAll('#clist .mc:not([data-remote="1"])').forEach(function(c){c.remove();});
+  // Limpiar todas las cartas de monstruos (son específicas de cada escena)
+  document.querySelectorAll('#clist .mc').forEach(function(c){c.remove();});
   miEl.style.display='none';miEl.src='';
   mw=0;mh=0;mx=0;my=0;ms=1;vx=0;vy=0;vs=1;
   document.getElementById('bighint').style.display='block';
@@ -986,6 +986,39 @@ window.addEventListener('load',function(){
       t.src=d.src;
     });
     window._activeListeners.push(function(){mapRef.off('value',h6);});
+
+    // MONSTRUOS DE ESCENA
+    var monRef=sceneRef.child('monsters');
+    var h7=monRef.on('child_added',function(snap){
+      var d=snap.val();if(!d||d.by===window._ME)return;
+      if(document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]'))return;
+      var list=document.getElementById('clist');
+      var card=document.createElement('div');card.className='mc';
+      card.dataset.cardid=snap.key;card.dataset.remote='1';
+      card.dataset.name=d.name;card.dataset.sz=d.sz||'mediano';
+      card.dataset.type='enemy';card.dataset.emoji=d.emoji||'👹';
+      var ci=document.createElement('div');ci.className='ci';
+      if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
+      else ci.textContent=d.emoji||'👹';
+      var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;
+      var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
+      card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
+      card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
+      card.addEventListener('mousedown',function(e){
+        if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
+        function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
+          document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
+          startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:snap.key});
+        }}
+        function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
+        document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
+      });
+      list.insertBefore(card,list.querySelector('.amb'));
+    });
+    var h8=monRef.on('child_removed',function(snap){
+      var el=document.querySelector('#clist .mc[data-cardid="'+snap.key+'"]');if(el)el.remove();
+    });
+    window._activeListeners.push(function(){monRef.off('child_added',h7);monRef.off('child_removed',h8);});
   };
   window._setupSceneListeners('scene1');
   db.ref('tokens').on('child_changed',function(snap){
