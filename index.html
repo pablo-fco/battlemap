@@ -462,7 +462,7 @@ document.getElementById('cpb-sz').addEventListener('click',function(){
   }
   toast('Tamaño actualizado');
 });
-document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;if(cropTargetCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
+document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
 document.getElementById('cpb-del').addEventListener('click',function(){if(!selCard)return;if(!confirm('¿Eliminar esta carta?'))return;if(window._db&&selCard.dataset.cardid&&!selCard.dataset.remote)window._db.ref('cards/'+selCard.dataset.cardid).remove();selCard.remove();selCard=null;cpanel.classList.remove('on');});
 document.addEventListener('click',function(e){if(!e.target.closest('.pc,.mc,#cpanel')){if(selCard)selCard.classList.remove('sel');selCard=null;cpanel.classList.remove('on');}});
 
@@ -488,7 +488,18 @@ function confirmCrop(){
     if(selCard===tc)refreshPanel();
     var tokens=document.querySelectorAll('.token[data-cardid="'+cid+'"]');
     for(var i=0;i<tokens.length;i++){var lbl=tokens[i].querySelector('.tlbl');tokens[i].innerHTML='';var ti=new Image();ti.src=result;tokens[i].appendChild(ti);if(lbl)tokens[i].appendChild(lbl);}
-    if(window._db){window._db.ref('cards/'+cid).update({portrait:result});for(var j=0;j<tokens.length;j++){if(tokens[j].dataset.tokenid)window._db.ref('tokens/'+tokens[j].dataset.tokenid).update({portrait:result});}}
+    if(window._db){
+      // Guardar retrato en la carta (héroe=global, monstruo=escena)
+      if(tc.classList.contains('mc'))
+        window._db.ref('scenes/'+currentSceneId+'/monsters/'+cid).update({portrait:result});
+      else
+        window._db.ref('cards/'+cid).update({portrait:result});
+      // Actualizar tokens
+      for(var j=0;j<tokens.length;j++){
+        if(tokens[j].dataset.tokenid)
+          window._db.ref('scenes/'+currentSceneId+'/tokens/'+tokens[j].dataset.tokenid).update({portrait:result});
+      }
+    }
     cropTargetCard=null;closeCrop();toast('Retrato asignado · '+tokens.length+' token(s) actualizado(s)');
   };tmp.src=cropB64;
 }
