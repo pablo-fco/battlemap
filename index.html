@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <title>⚔ Battle Map</title>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 html,body{height:100%;overflow:hidden;font-family:Georgia,serif;background:#1a1209;color:#e8d5a3;user-select:none;}
@@ -27,8 +29,7 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .cn{font-size:11px;text-align:center;padding:5px 6px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8d5a3;}
 .mc .cn{color:#ff9a9a;}
 .csz{font-size:8px;text-align:center;padding:0 4px 5px;color:#8a6a30;}
-/* indicador de retrato asignado */
-.portrait-badge{position:absolute;top:4px;right:4px;background:rgba(201,168,76,.85);border-radius:3px;font-size:9px;padding:1px 4px;color:#1a1209;font-family:Georgia,serif;pointer-events:none;}
+.portrait-badge{position:absolute;top:4px;right:4px;background:rgba(201,168,76,.85);border-radius:3px;font-size:9px;padding:1px 4px;color:#1a1209;pointer-events:none;}
 .apb{flex-shrink:0;width:132px;height:158px;border-radius:8px;border:1px dashed #4a9eff55;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:#4a9eff55;font-size:32px;gap:5px;transition:border-color .15s,color .15s;}
 .apb:hover{border-color:#4a9eff;color:#4a9eff;}
 .apb.al{border-color:#4aff8a33;color:#4aff8a33;}
@@ -93,195 +94,275 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .cbtn:hover{background:#3d2d12;}
 .cbtn.primary{background:#5c3d1a;border-color:#c9a84c;}
 
-/* ── PANEL DE AUDIO (solo master) ── */
-#audio-toggle{position:fixed;bottom:20px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+/* AUDIO */
+#audio-toggle{position:fixed;bottom:20px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
 #audio-toggle:hover{background:#3d2d12;}
-#audio-panel{position:fixed;bottom:70px;right:20px;width:360px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);max-height:80vh;overflow:hidden;}
+#audio-panel{position:fixed;bottom:72px;right:20px;width:340px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);max-height:76vh;overflow:hidden;}
 #audio-panel.open{display:flex;}
 #audio-header{padding:10px 14px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-#audio-header h2{font-size:20px;color:#c9a84c;letter-spacing:2px;flex:1;}
-#audio-tabs{display:flex;gap:2px;flex-shrink:0;}
-.atab{background:none;border:1px solid #2a1f0e;color:#8a6a30;font-size:14.7px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:1px;}
+#audio-header h2{font-size:15px;color:#c9a84c;letter-spacing:2px;flex:1;}
+#audio-tabs{display:flex;gap:2px;}
+.atab{background:none;border:1px solid #2a1f0e;color:#8a6a30;font-size:11px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;}
 .atab:hover{border-color:#5c3d1a;color:#c9a84c;}
 .atab.on{background:#2a1f0e;border-color:#5c3d1a;color:#c9a84c;}
 #audio-body{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:10px;}
 #audio-body::-webkit-scrollbar{width:4px;}
 #audio-body::-webkit-scrollbar-thumb{background:#2a1f0e;}
-
-/* NOW PLAYING */
 #now-playing{background:#1a1209;border:1px solid #2a1f0e;border-radius:6px;padding:10px 12px;flex-shrink:0;}
-#np-title{font-size:17.3px;color:#c9a84c;letter-spacing:1px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#np-title{font-size:13px;color:#c9a84c;letter-spacing:1px;margin-bottom:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #np-controls{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
-.np-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#c9a84c;width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:17.3px;display:flex;align-items:center;justify-content:center;}
+.np-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#c9a84c;width:30px;height:30px;border-radius:4px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;}
 .np-btn:hover{background:#3d2d12;}
 .np-btn.on{background:#5c3d1a;border-color:#c9a84c;}
 #np-progress{flex:1;accent-color:#c9a84c;cursor:pointer;height:3px;}
-#np-time{font-size:14.7px;color:#8a6a30;min-width:36px;text-align:right;}
+#np-time{font-size:11px;color:#8a6a30;min-width:36px;text-align:right;}
 #np-vol-row{display:flex;align-items:center;gap:6px;}
-#np-vol-row span{font-size:14.7px;color:#8a6a30;}
+#np-vol-row span{font-size:11px;color:#8a6a30;}
 #np-vol{flex:1;accent-color:#c9a84c;cursor:pointer;}
-#np-fade{font-size:14.7px;color:#8a6a30;display:flex;align-items:center;gap:4px;margin-left:8px;}
+#np-fade{font-size:11px;color:#8a6a30;display:flex;align-items:center;gap:4px;margin-left:8px;}
 #np-fade input{accent-color:#c9a84c;cursor:pointer;width:50px;}
-
-/* LISTAS */
 .list-section{background:#110e06;border:1px solid #2a1f0e;border-radius:6px;overflow:hidden;}
 .list-header{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid #1a1209;cursor:pointer;}
 .list-header:hover{background:#1a1209;}
-.list-name{font-size:17.3px;color:#c9a84c;letter-spacing:1px;flex:1;}
-.list-count{font-size:13.3px;color:#5c3d1a;}
-.list-arrow{font-size:14.7px;color:#5c3d1a;transition:transform .2s;}
+.list-name{font-size:13px;color:#c9a84c;letter-spacing:1px;flex:1;}
+.list-count{font-size:10px;color:#5c3d1a;}
+.list-arrow{font-size:11px;color:#5c3d1a;transition:transform .2s;}
 .list-arrow.open{transform:rotate(90deg);}
 .list-tracks{display:none;flex-direction:column;}
 .list-tracks.open{display:flex;}
 .track-row{display:flex;align-items:center;gap:6px;padding:5px 10px;cursor:pointer;border-top:1px solid #0f0c08;}
 .track-row:hover{background:#1a1209;}
 .track-row.playing{background:#1a1209;border-left:2px solid #c9a84c;}
-.track-name{font-size:14.7px;color:#e8d5a3;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.track-dur{font-size:13.3px;color:#5c3d1a;}
-.track-play{font-size:17.3px;color:#c9a84c;}
-.add-track-btn{font-size:14.7px;color:#5c3d1a;padding:5px 10px;cursor:pointer;text-align:center;border-top:1px solid #0f0c08;}
+.track-name{font-size:11px;color:#e8d5a3;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.track-dur{font-size:10px;color:#5c3d1a;}
+.track-play{font-size:13px;color:#c9a84c;}
+.add-track-btn{font-size:11px;color:#5c3d1a;padding:5px 10px;cursor:pointer;text-align:center;border-top:1px solid #0f0c08;}
 .add-track-btn:hover{color:#c9a84c;background:#1a1209;}
-.new-list-btn{background:none;border:1px dashed #2a1f0e;color:#5c3d1a;font-size:14.7px;padding:6px;border-radius:4px;cursor:pointer;width:100%;font-family:Georgia,serif;letter-spacing:1px;}
+.new-list-btn{background:none;border:1px dashed #2a1f0e;color:#5c3d1a;font-size:11px;padding:6px;border-radius:4px;cursor:pointer;width:100%;font-family:Georgia,serif;letter-spacing:1px;}
 .new-list-btn:hover{border-color:#5c3d1a;color:#c9a84c;}
-
-/* EFECTOS */
 .fx-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
-.fx-btn{background:#1a1209;border:1px solid #2a1f0e;border-radius:5px;padding:8px 4px;cursor:pointer;text-align:center;font-family:Georgia,serif;}
+.fx-btn{background:#1a1209;border:1px solid #2a1f0e;border-radius:5px;padding:8px 4px;cursor:pointer;text-align:center;}
 .fx-btn:hover{border-color:#5c3d1a;background:#2a1f0e;}
 .fx-btn:active{background:#3d2d12;}
-.fx-icon{font-size:24px;display:block;margin-bottom:3px;}
-.fx-label{font-size:14.7px;color:#8a6a30;letter-spacing:.5px;}
+.fx-icon{font-size:18px;display:block;margin-bottom:3px;}
+.fx-label{font-size:11px;color:#8a6a30;}
 .fx-add{border-style:dashed;color:#5c3d1a;}
 .fx-add:hover{color:#c9a84c;}
 
-/* ── PANEL DE DADOS ── */
-#dice-toggle{position:fixed;bottom:70px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:48px;height:48px;border-radius:50%;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+/* DADOS */
+#dice-toggle{position:fixed;bottom:72px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
 #dice-toggle:hover{background:#3d2d12;}
-#dice-panel{position:fixed;bottom:130px;right:20px;width:340px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);}
+#dice-panel{position:fixed;bottom:124px;right:20px;width:320px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);}
 #dice-panel.open{display:flex;}
-#dice-header{padding:12px 16px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
-#dice-header h2{font-size:16px;color:#c9a84c;letter-spacing:2px;flex:1;}
-#dice-private-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#8a6a30;font-size:12px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:1px;}
+#dice-header{padding:10px 14px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+#dice-header h2{font-size:15px;color:#c9a84c;letter-spacing:2px;flex:1;}
+#dice-private-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#8a6a30;font-size:11px;padding:4px 10px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;}
 #dice-private-btn.on{background:#5c3d1a;border-color:#c9a84c;color:#c9a84c;}
-#dice-body{padding:14px 16px;display:flex;flex-direction:column;gap:12px;}
-#dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.die-btn{background:#1a1209;border:1px solid #3d2d12;border-radius:8px;padding:12px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s,transform .1s;}
+#dice-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+#dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;}
+.die-btn{background:#1a1209;border:1px solid #3d2d12;border-radius:7px;padding:10px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s,transform .1s;}
 .die-btn:hover{background:#2a1f0e;border-color:#c9a84c;}
 .die-btn:active{transform:scale(.92);}
-.die-icon{width:44px;height:44px;display:block;margin:0 auto 4px;object-fit:contain;}
-.die-icon-emoji{font-size:36px;display:block;line-height:1;margin-bottom:4px;}
-.die-label{font-size:14px;color:#8a6a30;letter-spacing:1px;font-family:Georgia,serif;font-weight:bold;}
+.die-emoji{font-size:30px;display:block;line-height:1;margin-bottom:3px;}
+.die-label{font-size:13px;color:#8a6a30;letter-spacing:1px;font-family:Georgia,serif;font-weight:bold;}
 #dice-modifier{display:flex;align-items:center;gap:10px;}
-#dice-modifier label{font-size:14px;color:#8a6a30;letter-spacing:1px;flex-shrink:0;}
-#dice-mod-val{width:70px;background:#1a1209;border:1px solid #3d2d12;color:#e8d5a3;padding:5px 8px;border-radius:4px;font-family:Georgia,serif;font-size:16px;text-align:center;}
+#dice-modifier label{font-size:13px;color:#8a6a30;letter-spacing:1px;flex-shrink:0;}
+#dice-mod-val{width:65px;background:#1a1209;border:1px solid #3d2d12;color:#e8d5a3;padding:5px 8px;border-radius:4px;font-family:Georgia,serif;font-size:15px;text-align:center;}
 #dice-result-box{background:#1a1209;border:1px solid #2a1f0e;border-radius:6px;padding:12px;text-align:center;}
-#dice-result-num{font-size:48px;color:#c9a84c;font-family:Georgia,serif;display:block;line-height:1;}
-#dice-result-detail{font-size:14px;color:#8a6a30;margin-top:6px;letter-spacing:.5px;}
-#dice-history{max-height:140px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+#dice-result-num{font-size:44px;color:#c9a84c;font-family:Georgia,serif;display:block;line-height:1;}
+#dice-result-detail{font-size:13px;color:#8a6a30;margin-top:5px;}
+#dice-history{max-height:130px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
 #dice-history::-webkit-scrollbar{width:3px;}
 #dice-history::-webkit-scrollbar-thumb{background:#2a1f0e;}
-.dice-log{font-size:13px;color:#8a6a30;padding:4px 0;border-bottom:1px solid #0f0c08;display:flex;justify-content:space-between;font-family:Georgia,serif;}
-.dice-log .dl-who{color:#5c3d1a;}
-.dice-log .dl-result{color:#c9a84c;font-size:15px;}
-.dice-log.private{color:#3d2d12;}
-.dice-log.private .dl-result{color:#5c3d1a;}
+.dice-log{font-size:12px;color:#8a6a30;padding:4px 0;border-bottom:1px solid #0f0c08;display:flex;justify-content:space-between;gap:6px;}
+.dice-log .dl-who{color:#5c3d1a;flex-shrink:0;}
+.dice-log .dl-mid{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dice-log .dl-result{color:#c9a84c;font-size:14px;flex-shrink:0;}
+.dice-log.priv .dl-result{color:#5c3d1a;}
+#dice-anim{position:fixed;inset:0;z-index:950;pointer-events:none;align-items:center;justify-content:center;display:none;background:rgba(0,0,0,.5);}
+#dice-anim.show{display:flex;}
+#dice-anim-box{text-align:center;}
+#da-die{font-size:110px;display:block;animation:daBounce .9s cubic-bezier(.36,.07,.19,.97) forwards;}
+#da-num{font-size:72px;color:#c9a84c;font-family:Georgia,serif;display:block;opacity:0;animation:daReveal .4s .75s ease forwards;}
+#da-lbl{font-size:18px;color:#8a6a30;display:block;opacity:0;animation:daReveal .3s .9s ease forwards;}
+#da-spc{font-size:22px;display:block;opacity:0;animation:daReveal .3s 1s ease forwards;}
+@keyframes daBounce{0%{transform:translateY(-140px) rotate(0deg);opacity:0;}15%{opacity:1;}45%{transform:translateY(18px) rotate(200deg);}60%{transform:translateY(-8px) rotate(300deg);}73%{transform:translateY(5px) rotate(345deg);}84%{transform:translateY(-3px) rotate(358deg);}92%{transform:translateY(1px) rotate(360deg);}100%{transform:translateY(0) rotate(360deg);}}
+@keyframes daReveal{from{opacity:0;transform:scale(.4);}to{opacity:1;transform:scale(1);}}
+#dice-notif{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(10,8,4,.97);border:1px solid #c9a84c;border-radius:8px;padding:14px 28px;z-index:940;display:none;text-align:center;pointer-events:none;min-width:180px;}
+#dice-notif.show{display:block;animation:dnIn .25s ease;}
+@keyframes dnIn{from{opacity:0;transform:translateX(-50%) translateY(-8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+.dn-who{font-size:13px;color:#8a6a30;letter-spacing:1px;margin-bottom:3px;}
+.dn-dice{font-size:13px;color:#5c3d1a;margin-bottom:6px;}
+.dn-result{font-size:54px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
+.dn-detail{font-size:13px;color:#8a6a30;margin-top:5px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <h1>⚔ Battle Map</h1>
+    <span id="hint-mode">🔍 Ver · rueda=zoom · espacio+drag=mover</span>
+    <button class="btn" id="mbtn" onclick="toggleMode()">✏ Editar mapa</button>
+    <button class="btn" onclick="resetView()">⌖ Reset</button>
+    <button class="btn" onclick="document.getElementById('fm').click()">🗺 Subir mapa</button>
+  </div>
+  <div id="ptop">
+    <div id="ptop-lbl">HÉROES</div>
+    <div id="hlist">
+      <div class="apb" onclick="document.getElementById('fp').click()"><span style="font-size:32px">+</span><span>Jugador</span></div>
+      <div class="apb al" onclick="document.getElementById('fa').click()"><span style="font-size:32px">+</span><span>Aliado</span></div>
+    </div>
+  </div>
+  <div id="mid">
+    <div id="bwrap">
+      <canvas id="gc"></canvas>
+      <div id="bi"><img id="mi"/><div id="tlayer"></div></div>
+      <div id="eov"><div id="eb"></div><div id="sh"></div></div>
+      <div id="bighint">🗺 Sube un mapa · Clic en carta = opciones · Arrastra carta = colocar token<br>Clic derecho sobre token = opciones · M=audio · D=dados</div>
+    </div>
+    <div id="cpanel">
+      <div id="cp-img"><span></span></div>
+      <div id="cp-name">—</div>
+      <div id="cp-sz">—</div>
+      <hr>
+      <button class="cpb" id="cpb-ren">✏ Renombrar</button>
+      <button class="cpb" id="cpb-sz">⟳ Cambiar tamaño</button>
+      <button class="cpb" id="cpb-portrait">🖼 Asignar retrato</button>
+      <button class="cpb del" id="cpb-del">🗑 Eliminar carta</button>
+      <div id="cp-tip">Arrastra la carta al<br>tablero para colocar<br>un token</div>
+    </div>
+  </div>
+  <div id="pbot">
+    <div id="pbot-lbl">⚔ ENCUENTROS · clic = opciones · arrastra = colocar token</div>
+    <div id="clist">
+      <div class="amb" onclick="document.getElementById('fmo').click()"><span style="font-size:30px">+</span><span>Monstruo</span></div>
+    </div>
+  </div>
+</div>
 
-/* Animación del dado */
-#dice-anim-overlay{position:fixed;inset:0;z-index:940;pointer-events:none;display:none;}
-#dice-anim-overlay.show{display:block;}
-#dice-anim-container{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);}
-#dice-anim-die{font-size:100px;display:block;text-align:center;animation:diceRoll .8s cubic-bezier(.36,.07,.19,.97) forwards;}
-#dice-anim-result{font-size:64px;color:#c9a84c;font-family:Georgia,serif;text-align:center;display:block;opacity:0;animation:diceReveal .4s .7s ease forwards;}
-#dice-anim-label{font-size:18px;color:#8a6a30;text-align:center;display:block;opacity:0;animation:diceReveal .3s .9s ease forwards;}
-#dice-anim-special{font-size:20px;text-align:center;display:block;opacity:0;animation:diceReveal .3s 1s ease forwards;}
-@keyframes diceRoll{
-  0%{transform:translateY(-120px) rotate(0deg);opacity:0;}
-  15%{opacity:1;}
-  40%{transform:translateY(20px) rotate(180deg);}
-  55%{transform:translateY(-10px) rotate(270deg);}
-  70%{transform:translateY(8px) rotate(330deg);}
-  82%{transform:translateY(-4px) rotate(355deg);}
-  90%{transform:translateY(2px) rotate(360deg);}
-  100%{transform:translateY(0) rotate(360deg);}
-}
-@keyframes diceReveal{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+<!-- RECORTADOR -->
+<div id="crop-overlay">
+  <div id="crop-title">✂ SELECCIONAR RETRATO</div>
+  <div id="crop-hint">Arrastra para seleccionar área · Sin selección = imagen completa</div>
+  <div id="crop-container"><img id="crop-source"/><div id="crop-sel"></div></div>
+  <div id="crop-btns">
+    <button class="cbtn" onclick="closeCrop()">Cancelar</button>
+    <button class="cbtn primary" onclick="confirmCrop()">✔ Usar esta área</button>
+  </div>
+</div>
 
-/* Notificación pública */
-#dice-notification{position:fixed;top:80px;left:50%;transform:translateX(-50%);background:rgba(13,10,5,.97);border:1px solid #c9a84c;border-radius:8px;padding:14px 28px;z-index:950;display:none;text-align:center;pointer-events:none;min-width:200px;}
-#dice-notification.show{display:block;animation:diceNotifIn .3s ease;}
-@keyframes diceNotifIn{from{opacity:0;transform:translateX(-50%) translateY(-10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-#dn-who{font-size:13px;color:#8a6a30;letter-spacing:1px;margin-bottom:4px;}
-#dn-dice{font-size:14px;color:#5c3d1a;margin-bottom:6px;}
-#dn-result{font-size:56px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
-#dn-detail{font-size:14px;color:#8a6a30;margin-top:6px;}
+<div id="ctx">
+  <button id="ctx-ren">✏ Renombrar</button>
+  <button id="ctx-sz">⟳ Cambiar tamaño</button>
+  <hr>
+  <button id="ctx-del" style="color:#ff9a9a;">🗑 Eliminar token</button>
+</div>
+
+<!-- AUDIO -->
+<button id="audio-toggle" title="Audio (M)">🎵</button>
+<div id="audio-panel">
+  <div id="audio-header">
+    <h2>🎵 AUDIO — MASTER</h2>
+    <div id="audio-tabs">
+      <button class="atab on" onclick="showAudioTab('music',this)">Música</button>
+      <button class="atab" onclick="showAudioTab('fx',this)">Efectos</button>
+    </div>
+  </div>
+  <div id="audio-body">
+    <div id="now-playing">
+      <div id="np-title">Sin pista seleccionada</div>
+      <div id="np-controls">
+        <button class="np-btn" onclick="audioStop()">⏹</button>
+        <button class="np-btn" id="np-play" onclick="audioPlayPause()">▶</button>
+        <button class="np-btn" id="np-loop" onclick="audioToggleLoop()">🔁</button>
+        <input type="range" id="np-progress" min="0" max="100" value="0" oninput="audioSeek(this.value)">
+        <span id="np-time">0:00</span>
+      </div>
+      <div id="np-vol-row">
+        <span>🔊</span>
+        <input type="range" id="np-vol" min="0" max="100" value="70" oninput="audioVol(this.value)">
+        <div id="np-fade"><span>Fade</span><input type="range" id="np-fade-val" min="0" max="5" value="2" step="0.5"><span id="np-fade-label">2s</span></div>
+      </div>
+    </div>
+    <div id="tab-music" style="display:flex;flex-direction:column;gap:8px;">
+      <div id="lists-container"></div>
+      <button class="new-list-btn" onclick="createList()">+ Nueva lista</button>
+    </div>
+    <div id="tab-fx" style="display:none">
+      <div class="fx-grid" id="fx-grid"></div>
+      <button class="new-list-btn" style="margin-top:8px" onclick="addFxBtn()">+ Añadir efecto</button>
+    </div>
+  </div>
+</div>
+
+<!-- DADOS -->
+<button id="dice-toggle" title="Dados (D)">🎲</button>
+<div id="dice-panel">
+  <div id="dice-header">
+    <h2>🎲 DADOS</h2>
+    <button id="dice-private-btn">🔒 Privado</button>
+  </div>
+  <div id="dice-body">
+    <div id="dice-grid">
+      <div class="die-btn" onclick="rollDie(4,'d4','🔺')"><span class="die-emoji">🔺</span><span class="die-label">d4</span></div>
+      <div class="die-btn" onclick="rollDie(6,'d6','⬛')"><span class="die-emoji">⬛</span><span class="die-label">d6</span></div>
+      <div class="die-btn" onclick="rollDie(8,'d8','🔷')"><span class="die-emoji">🔷</span><span class="die-label">d8</span></div>
+      <div class="die-btn" onclick="rollDie(10,'d10','🔟')"><span class="die-emoji">🔟</span><span class="die-label">d10</span></div>
+      <div class="die-btn" onclick="rollDie(12,'d12','⬠')"><span class="die-emoji">⬠</span><span class="die-label">d12</span></div>
+      <div class="die-btn" onclick="rollDie(20,'d20','🎯')"><span class="die-emoji">🎯</span><span class="die-label">d20</span></div>
+      <div class="die-btn" onclick="rollDie(100,'d100','💯')"><span class="die-emoji">💯</span><span class="die-label">d100</span></div>
+      <div class="die-btn" onclick="rollMultiple()"><span class="die-emoji">🎲</span><span class="die-label">multi</span></div>
+    </div>
+    <div id="dice-modifier"><label>Mod:</label><input type="number" id="dice-mod-val" value="0" min="-20" max="20"></div>
+    <div id="dice-result-box"><span id="dice-result-num">—</span><div id="dice-result-detail"></div></div>
+    <div id="dice-history"></div>
+  </div>
+</div>
+<div id="dice-anim"><div id="dice-anim-box"><span id="da-die"></span><span id="da-num"></span><span id="da-lbl"></span><span id="da-spc"></span></div></div>
+<div id="dice-notif"><div class="dn-who" id="dn-who"></div><div class="dn-dice" id="dn-dice"></div><div class="dn-result" id="dn-result"></div><div class="dn-detail" id="dn-detail"></div></div>
+
+<div id="ghost"></div>
+<div id="toast"></div>
+<input type="file" id="fm" accept="image/*" style="display:none">
+<input type="file" id="fmo" accept="image/*" style="display:none">
+<input type="file" id="fp" accept="image/*" style="display:none">
+<input type="file" id="fa" accept="image/*" style="display:none">
+<input type="file" id="fportrait" accept="image/*" style="display:none">
+<input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
+<input type="file" id="f-fx" accept="audio/*" style="display:none">
+
+<script>
+var CELL=26;
+var SZL=['diminuto','pequeño','mediano','grande','enorme','gargantuesco'];
+var SZD={diminuto:{f:'2,5×2,5 ft',c:.5},'pequeño':{f:'5×5 ft',c:1},mediano:{f:'5×5 ft',c:1},grande:{f:'10×10 ft',c:2},enorme:{f:'15×15 ft',c:3},gargantuesco:{f:'20×20 ft',c:4}};
+function spx(sz){return Math.round((SZD[sz]?SZD[sz].c:1)*CELL);}
+
+var bwrap=document.getElementById('bwrap'),bi=document.getElementById('bi'),gc=document.getElementById('gc');
+var miEl=document.getElementById('mi'),tlayer=document.getElementById('tlayer'),eov=document.getElementById('eov');
+var ghost=document.getElementById('ghost'),cpanel=document.getElementById('cpanel'),ctxEl=document.getElementById('ctx');
+var vx=0,vy=0,vs=1,mw=0,mh=0,mx=0,my=0,ms=1;
+var editMode=false,spc=false,panning=false,psx=0,psy=0,pvx=0,pvy=0;
+var edrag=false,escale=false,esx=0,esy=0,eox=0,eoy=0,esw=0;
+var dtok=null,dox=0,doy=0,pdrag=null,pdata=null,selCard=null,ctxTok=null;
+var cardCounter=0,portraits={},cropTargetCard=null,cropDragging=false,cropSX=0,cropSY=0,cropRect={x:0,y:0,w:0,h:0},cropB64=null;
+
+function drawGrid(){var W=bwrap.clientWidth,H=bwrap.clientHeight;if(gc.width!==W||gc.height!==H){gc.width=W;gc.height=H;}var c=gc.getContext('2d');c.clearRect(0,0,W,H);c.strokeStyle='rgba(255,255,255,.1)';c.lineWidth=.5;var cell=CELL*vs,ox=((vx%cell)+cell)%cell,oy=((vy%cell)+cell)%cell;for(var x=ox-cell;x<=W;x+=cell){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}for(var y=oy-cell;y<=H;y+=cell){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}}
 window.addEventListener('resize',drawGrid);drawGrid();
 
 function applyVP(){bi.style.transform='translate('+vx+'px,'+vy+'px) scale('+vs+')';updateEov();drawGrid();}
-function resetView(){
-  var W=bwrap.clientWidth,H=bwrap.clientHeight;
-  if(mw>0&&mh>0){
-    // Tamaño real del mapa en px (incluyendo el slider de escala)
-    var mapW=mw*ms, mapH=mh*ms;
-    // Escala para que encaje en el área visible
-    vs=Math.min(W/mapW, H/mapH);
-    // Centrar teniendo en cuenta el offset mx,my del mapa dentro del inner
-    vx=(W - mapW*vs)/2 - mx*vs;
-    vy=(H - mapH*vs)/2 - my*vs;
-  } else {
-    vx=0;vy=0;vs=1;
-  }
-  applyVP();
-// Exponer variables necesarias para Firebase
-window.portraits=portraits;
-window.selCard=null;
-window.ctxTok=null;
-window.dtok=null;
-window.dox=0;
-window.doy=0;
-}
+function resetView(){var W=bwrap.clientWidth,H=bwrap.clientHeight;if(mw>0&&mh>0){var mW=mw*ms,mH=mh*ms;vs=Math.min(W/mW,H/mH);vx=(W-mW*vs)/2-mx*vs;vy=(H-mH*vs)/2-my*vs;}else{vx=0;vy=0;vs=1;}applyVP();}
 function applyMap(){miEl.style.left=mx+'px';miEl.style.top=my+'px';miEl.style.width=Math.round(mw*ms)+'px';miEl.style.height=Math.round(mh*ms)+'px';updateEov();}
-function updateEov(){
-  if(!editMode||!miEl.src||miEl.style.display==='none'){eov.classList.remove('on');return;}
-  eov.style.left=(vx+mx*vs)+'px';eov.style.top=(vy+my*vs)+'px';
-  eov.style.width=(mw*ms*vs)+'px';eov.style.height=(mh*ms*vs)+'px';
-  eov.classList.add('on');
-}
+function updateEov(){if(!editMode||!miEl.src||miEl.style.display==='none'){eov.classList.remove('on');return;}eov.style.left=(vx+mx*vs)+'px';eov.style.top=(vy+my*vs)+'px';eov.style.width=(mw*ms*vs)+'px';eov.style.height=(mh*ms*vs)+'px';eov.classList.add('on');}
 
-document.getElementById('fm').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  var fr=new FileReader();
-  fr.onload=function(ev){
-    var b64=ev.target.result;
-    var t=new Image();
-    t.onload=function(){mw=t.naturalWidth;mh=t.naturalHeight;ms=1;mx=0;my=0;miEl.src=b64;miEl.style.display='block';document.getElementById('bighint').style.display='none';applyMap();applyVP();toast('Mapa cargado');};
-    t.src=b64;
-  };
-  fr.readAsDataURL(f);e.target.value='';
-});
+document.getElementById('fm').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){var b64=ev.target.result;var t=new Image();t.onload=function(){mw=t.naturalWidth;mh=t.naturalHeight;ms=1;mx=0;my=0;miEl.src=b64;miEl.style.display='block';document.getElementById('bighint').style.display='none';applyMap();applyVP();toast('Mapa cargado');};t.src=b64;};fr.readAsDataURL(f);e.target.value='';});
+function toggleMode(){editMode=!editMode;var b=document.getElementById('mbtn'),h=document.getElementById('hint-mode');if(editMode){b.classList.add('on');b.textContent='🔍 Modo Ver';h.textContent='✏ Editar · drag=mover · esquina=escalar · rueda=zoom';updateEov();}else{b.classList.remove('on');b.textContent='✏ Editar mapa';h.textContent='🔍 Ver · rueda=zoom · espacio+drag=mover';eov.classList.remove('on');}}
 
-function toggleMode(){
-  editMode=!editMode;
-  var b=document.getElementById('mbtn'),h=document.getElementById('hint-mode');
-  if(editMode){b.classList.add('on');b.textContent='🔍 Modo Ver';h.textContent='✏ Editar · drag=mover · esquina=escalar · rueda=zoom';updateEov();}
-  else{b.classList.remove('on');b.textContent='✏ Editar mapa';h.textContent='🔍 Ver · rueda=zoom · espacio+drag=mover';eov.classList.remove('on');}
-}
-
-bwrap.addEventListener('wheel',function(e){
-  e.preventDefault();
-  if(editMode){ms=Math.max(.05,Math.min(10,ms*(e.deltaY>0?.95:1.05)));applyMap();return;}
-  var r=bwrap.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;
-  var f=e.deltaY>0?.9:1.1,ns=Math.min(5,Math.max(.1,vs*f));
-  vx=px-(px-vx)*(ns/vs);vy=py-(py-vy)*(ns/vs);vs=ns;applyVP();
-},{passive:false});
-
+bwrap.addEventListener('wheel',function(e){e.preventDefault();if(editMode){ms=Math.max(.05,Math.min(10,ms*(e.deltaY>0?.95:1.05)));applyMap();return;}var r=bwrap.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;var f=e.deltaY>0?.9:1.1,ns=Math.min(5,Math.max(.1,vs*f));vx=px-(px-vx)*(ns/vs);vy=py-(py-vy)*(ns/vs);vs=ns;applyVP();},{passive:false});
 document.getElementById('sh').addEventListener('mousedown',function(e){e.preventDefault();e.stopPropagation();escale=true;esx=e.clientX;esw=mw*ms;});
 eov.addEventListener('mousedown',function(e){if(e.target.id==='sh')return;e.preventDefault();e.stopPropagation();edrag=true;esx=e.clientX;esy=e.clientY;eox=mx;eoy=my;});
 document.addEventListener('keydown',function(e){if(e.code==='Space'&&e.target.tagName!=='INPUT'){spc=true;e.preventDefault();}});
 document.addEventListener('keyup',function(e){if(e.code==='Space')spc=false;});
-bwrap.addEventListener('mousedown',function(e){
-  if(editMode)return;
-  if(e.button===1||(e.button===0&&spc)){e.preventDefault();panning=true;psx=e.clientX;psy=e.clientY;pvx=vx;pvy=vy;bwrap.style.cursor='grabbing';}
-});
+bwrap.addEventListener('mousedown',function(e){if(editMode)return;if(e.button===1||(e.button===0&&spc)){e.preventDefault();panning=true;psx=e.clientX;psy=e.clientY;pvx=vx;pvy=vy;bwrap.style.cursor='grabbing';}});
 
 document.addEventListener('mousemove',function(e){
   if(edrag){mx=eox+(e.clientX-esx)/vs;my=eoy+(e.clientY-esy)/vs;applyMap();return;}
@@ -291,1118 +372,229 @@ document.addEventListener('mousemove',function(e){
   if(pdrag){ghost.style.left=(e.clientX-pdrag.ox)+'px';ghost.style.top=(e.clientY-pdrag.oy)+'px';}
   if(cropDragging){doCropMove(e);}
 });
-
 document.addEventListener('mouseup',function(e){
   edrag=false;escale=false;
   if(panning){panning=false;bwrap.style.cursor='';}
-  if(dtok){dtok.classList.remove('drag');dtok=null;}
-  if(pdrag){
-    ghost.style.display='none';
-    var r=bwrap.getBoundingClientRect();
-    if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){
-      var d=pdata;
-      var portrait=d.cardid?portraits[d.cardid]:'';
-      mkToken(d.type,portrait||d.emoji,d.label,e.clientX,e.clientY,d.sz,!!portrait,d.cardid);
-      toast('"'+d.label+'" colocado');
-    }
-    pdrag=null;pdata=null;
-  }
+  if(dtok){if(window._db&&dtok.dataset.tokenid)window._db.ref('tokens/'+dtok.dataset.tokenid+'/pos').set({x:parseFloat(dtok.style.left),y:parseFloat(dtok.style.top),by:window._ME||'x'});dtok.classList.remove('drag');dtok=null;}
+  if(pdrag){ghost.style.display='none';var r=bwrap.getBoundingClientRect();if(e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom){var d=pdata;var portrait=d.cardid?portraits[d.cardid]:'';mkToken(d.type,portrait||d.emoji,d.label,e.clientX,e.clientY,d.sz,!!portrait,d.cardid);toast('"'+d.label+'" colocado');}pdrag=null;pdata=null;}
   if(cropDragging){cropDragging=false;}
 });
 
-// ── PANEL LATERAL ──
-function openCardPanel(card){
-  if(selCard)selCard.classList.remove('sel');
-  if(selCard===card){selCard=null;cpanel.classList.remove('on');return;}
-  selCard=card;card.classList.add('sel');
-  refreshPanel();cpanel.classList.add('on');
-}
-function refreshPanel(){
-  if(!selCard)return;
-  var ci=document.getElementById('cp-img');ci.innerHTML='';
-  // El panel muestra el retrato si existe, si no el emoji
-  var portrait=portraits[selCard.dataset.cardid];
-  if(portrait){var i=new Image();i.src=portrait;ci.appendChild(i);}
-  else{var s=document.createElement('span');s.textContent=selCard.dataset.emoji||'?';ci.appendChild(s);}
-  document.getElementById('cp-name').textContent=selCard.dataset.name;
-  var sz=selCard.dataset.sz||'mediano';
-  document.getElementById('cp-sz').textContent=sz+' · '+(SZD[sz]?SZD[sz].f:'5×5 ft');
-}
+// Panel lateral
+function openCardPanel(card){if(selCard)selCard.classList.remove('sel');if(selCard===card){selCard=null;cpanel.classList.remove('on');return;}selCard=card;card.classList.add('sel');refreshPanel();cpanel.classList.add('on');}
+function refreshPanel(){if(!selCard)return;var ci=document.getElementById('cp-img');ci.innerHTML='';var portrait=portraits[selCard.dataset.cardid];if(portrait){var i=new Image();i.src=portrait;ci.appendChild(i);}else{var s=document.createElement('span');s.textContent=selCard.dataset.emoji||'?';ci.appendChild(s);}document.getElementById('cp-name').textContent=selCard.dataset.name;var sz=selCard.dataset.sz||'mediano';document.getElementById('cp-sz').textContent=sz+' · '+(SZD[sz]?SZD[sz].f:'5×5 ft');}
+document.getElementById('cpb-ren').addEventListener('click',function(){if(!selCard)return;var n=prompt('Nuevo nombre:',selCard.dataset.name);if(!n)return;selCard.dataset.name=n;selCard.querySelector('.cn').textContent=n;document.getElementById('cp-name').textContent=n;toast('Renombrado');});
+document.getElementById('cpb-sz').addEventListener('click',function(){if(!selCard)return;var s=prompt('Tamaño ('+SZL.join(', ')+'):',selCard.dataset.sz);if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}selCard.dataset.sz=s;var el=selCard.querySelector('.csz');if(el)el.textContent=s+' · '+SZD[s].f;document.getElementById('cp-sz').textContent=s+' · '+SZD[s].f;toast('Tamaño actualizado');});
+document.getElementById('cpb-portrait').addEventListener('click',function(){if(!selCard)return;cropTargetCard=selCard;document.getElementById('fportrait').click();});
+document.getElementById('cpb-del').addEventListener('click',function(){if(!selCard)return;if(!confirm('¿Eliminar esta carta?'))return;if(window._db&&selCard.dataset.cardid&&!selCard.dataset.remote)window._db.ref('cards/'+selCard.dataset.cardid).remove();selCard.remove();selCard=null;cpanel.classList.remove('on');});
+document.addEventListener('click',function(e){if(!e.target.closest('.pc,.mc,#cpanel')){if(selCard)selCard.classList.remove('sel');selCard=null;cpanel.classList.remove('on');}});
 
-document.getElementById('cpb-ren').addEventListener('click',function(){
-  if(!selCard)return;
-  var n=prompt('Nuevo nombre:',selCard.dataset.name);if(!n)return;
-  selCard.dataset.name=n;selCard.querySelector('.cn').textContent=n;
-  document.getElementById('cp-name').textContent=n;toast('Renombrado');
-});
-document.getElementById('cpb-sz').addEventListener('click',function(){
-  if(!selCard)return;
-  var s=prompt('Tamaño ('+SZL.join(', ')+'):',selCard.dataset.sz);
-  if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}
-  selCard.dataset.sz=s;
-  var el=selCard.querySelector('.csz');if(el)el.textContent=s+' · '+SZD[s].f;
-  document.getElementById('cp-sz').textContent=s+' · '+SZD[s].f;toast('Tamaño actualizado');
-});
-document.getElementById('cpb-portrait').addEventListener('click',function(){
-  if(!selCard)return;
-  cropTargetCard=selCard; // bloquear referencia ANTES del file picker
-  document.getElementById('fportrait').click();
-});
-document.getElementById('cpb-del').addEventListener('click',function(){
-  if(!selCard)return;
-  if(!confirm('¿Eliminar esta carta?'))return;
-  selCard.remove();selCard=null;cpanel.classList.remove('on');
-});
-document.addEventListener('click',function(e){
-  if(!e.target.closest('.pc,.mc,#cpanel')){if(selCard)selCard.classList.remove('sel');selCard=null;cpanel.classList.remove('on');}
-});
-
-// ── RECORTADOR ──
-var cropB64=null,cropDragging=false,cropSX=0,cropSY=0;
-var cropRect={x:0,y:0,w:0,h:0};
-var cropOverlay=document.getElementById('crop-overlay');
-var cropSrc=document.getElementById('crop-source');
-var cropSelEl=document.getElementById('crop-sel');
-var cropCont=document.getElementById('crop-container');
-
-document.getElementById('fportrait').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  var fr=new FileReader();
-  fr.onload=function(ev){
-    cropB64=ev.target.result;
-    cropSrc.src=cropB64;
-    cropSelEl.style.display='none';
-    cropRect={x:0,y:0,w:0,h:0};
-    cropOverlay.classList.add('on');
-  };
-  fr.readAsDataURL(f);
-  e.target.value='';
-});
-
-cropCont.addEventListener('mousedown',function(e){
-  var r=cropCont.getBoundingClientRect();
-  cropSX=e.clientX-r.left;cropSY=e.clientY-r.top;
-  cropDragging=true;
-  cropRect={x:cropSX,y:cropSY,w:0,h:0};
-  cropSelEl.style.display='block';
-  cropSelEl.style.left=cropSX+'px';cropSelEl.style.top=cropSY+'px';
-  cropSelEl.style.width='0';cropSelEl.style.height='0';
-  e.preventDefault();e.stopPropagation();
-});
-function doCropMove(e){
-  if(!cropDragging)return;
-  var r=cropCont.getBoundingClientRect();
-  var cx=Math.max(0,Math.min(r.width,e.clientX-r.left));
-  var cy=Math.max(0,Math.min(r.height,e.clientY-r.top));
-  cropRect.x=Math.min(cropSX,cx);cropRect.y=Math.min(cropSY,cy);
-  cropRect.w=Math.abs(cx-cropSX);cropRect.h=Math.abs(cy-cropSY);
-  cropSelEl.style.left=cropRect.x+'px';cropSelEl.style.top=cropRect.y+'px';
-  cropSelEl.style.width=cropRect.w+'px';cropSelEl.style.height=cropRect.h+'px';
-}
-function closeCrop(){cropOverlay.classList.remove('on');cropB64=null;}
-
+// Recortador
+var cropSrc=document.getElementById('crop-source'),cropSelEl=document.getElementById('crop-sel'),cropCont=document.getElementById('crop-container');
+document.getElementById('fportrait').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){cropB64=ev.target.result;cropSrc.src=cropB64;cropSelEl.style.display='none';cropRect={x:0,y:0,w:0,h:0};document.getElementById('crop-overlay').classList.add('on');};fr.readAsDataURL(f);e.target.value='';});
+cropCont.addEventListener('mousedown',function(e){var r=cropCont.getBoundingClientRect();cropSX=e.clientX-r.left;cropSY=e.clientY-r.top;cropDragging=true;cropRect={x:cropSX,y:cropSY,w:0,h:0};cropSelEl.style.display='block';cropSelEl.style.left=cropSX+'px';cropSelEl.style.top=cropSY+'px';cropSelEl.style.width='0';cropSelEl.style.height='0';e.preventDefault();e.stopPropagation();});
+function doCropMove(e){if(!cropDragging)return;var r=cropCont.getBoundingClientRect();var cx=Math.max(0,Math.min(r.width,e.clientX-r.left)),cy=Math.max(0,Math.min(r.height,e.clientY-r.top));cropRect.x=Math.min(cropSX,cx);cropRect.y=Math.min(cropSY,cy);cropRect.w=Math.abs(cx-cropSX);cropRect.h=Math.abs(cy-cropSY);cropSelEl.style.left=cropRect.x+'px';cropSelEl.style.top=cropRect.y+'px';cropSelEl.style.width=cropRect.w+'px';cropSelEl.style.height=cropRect.h+'px';}
+function closeCrop(){document.getElementById('crop-overlay').classList.remove('on');cropB64=null;}
 function confirmCrop(){
-  var targetCard=cropTargetCard;
-  if(!targetCard||!cropB64){closeCrop();return;}
-
-  // Si no se seleccionó área usar imagen completa
+  var tc=cropTargetCard;if(!tc||!cropB64){closeCrop();return;}
   var useFull=(cropRect.w<5||cropRect.h<5);
-  var dw=cropSrc.offsetWidth,dh=cropSrc.offsetHeight;
-  var scX=cropSrc.naturalWidth/dw,scY=cropSrc.naturalHeight/dh;
-  var sx=useFull?0:Math.round(cropRect.x*scX);
-  var sy=useFull?0:Math.round(cropRect.y*scY);
-  var sw=useFull?cropSrc.naturalWidth:Math.round(cropRect.w*scX);
-  var sh=useFull?cropSrc.naturalHeight:Math.round(cropRect.h*scY);
-
-  var canvas=document.createElement('canvas');
-  canvas.width=256;canvas.height=256;
-  var ctx=canvas.getContext('2d');
-  var tmp=new Image();
+  var dw=cropSrc.offsetWidth,dh=cropSrc.offsetHeight,scX=cropSrc.naturalWidth/dw,scY=cropSrc.naturalHeight/dh;
+  var sx=useFull?0:Math.round(cropRect.x*scX),sy=useFull?0:Math.round(cropRect.y*scY);
+  var sw=useFull?cropSrc.naturalWidth:Math.round(cropRect.w*scX),sh=useFull?cropSrc.naturalHeight:Math.round(cropRect.h*scY);
+  var canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;
+  var ctx=canvas.getContext('2d');var tmp=new Image();
   tmp.onload=function(){
-    ctx.drawImage(tmp,sx,sy,sw,sh,0,0,256,256);
-    var result=canvas.toDataURL('image/jpeg',.92);
-    var cid=targetCard.dataset.cardid;
-
-    // Guardar retrato (solo para tokens — la carta NO se toca)
-    portraits[cid]=result;
-
-    // Añadir/actualizar badge en la carta para indicar que tiene retrato
-    var oldBadge=targetCard.querySelector('.portrait-badge');
-    if(oldBadge)oldBadge.remove();
-    var badge=document.createElement('span');
-    badge.className='portrait-badge';badge.textContent='🖼';
-    targetCard.appendChild(badge);
-
-    // Actualizar panel lateral (muestra el retrato en el preview)
-    if(selCard===targetCard)refreshPanel();
-
-    // Actualizar todos los tokens ya colocados en el tablero
+    ctx.drawImage(tmp,sx,sy,sw,sh,0,0,256,256);var result=canvas.toDataURL('image/jpeg',.92);
+    var cid=tc.dataset.cardid;portraits[cid]=result;
+    var old=tc.querySelector('.portrait-badge');if(old)old.remove();
+    var badge=document.createElement('span');badge.className='portrait-badge';badge.textContent='🖼';tc.appendChild(badge);
+    if(selCard===tc)refreshPanel();
     var tokens=document.querySelectorAll('.token[data-cardid="'+cid+'"]');
-    for(var i=0;i<tokens.length;i++){
-      var tok=tokens[i];
-      var lbl=tok.querySelector('.tlbl');
-      tok.innerHTML='';
-      var ti=new Image();ti.src=result;tok.appendChild(ti);
-      if(lbl)tok.appendChild(lbl);
-    }
-
-    cropTargetCard=null;
-    if(window._fbPublishPortrait) window._fbPublishPortrait(cid,result);
-    closeCrop();
-
-    toast('Retrato asignado · '+tokens.length+' token(s) actualizado(s)');
-  };
-  tmp.src=cropB64;
+    for(var i=0;i<tokens.length;i++){var lbl=tokens[i].querySelector('.tlbl');tokens[i].innerHTML='';var ti=new Image();ti.src=result;tokens[i].appendChild(ti);if(lbl)tokens[i].appendChild(lbl);}
+    if(window._db){window._db.ref('cards/'+cid).update({portrait:result});for(var j=0;j<tokens.length;j++){if(tokens[j].dataset.tokenid)window._db.ref('tokens/'+tokens[j].dataset.tokenid).update({portrait:result});}}
+    cropTargetCard=null;closeCrop();toast('Retrato asignado · '+tokens.length+' token(s) actualizado(s)');
+  };tmp.src=cropB64;
 }
 
-// ── CARTAS JUGADOR ──
-document.getElementById('fp').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkPCard('player',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
-  e.target.value='';
-});
-document.getElementById('fa').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkPCard('npc',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
-  e.target.value='';
-});
-function loadCardImage(file,cb){
-  var fr=new FileReader();
-  fr.onload=function(ev){cb(ev.target.result);};
-  fr.readAsDataURL(file);
-}
+// Cartas
+function loadCardImage(file,cb){var fr=new FileReader();fr.onload=function(ev){cb(ev.target.result);};fr.readAsDataURL(file);}
+document.getElementById('fp').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;loadCardImage(f,function(b64){mkPCard('player',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});e.target.value='';});
+document.getElementById('fa').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;loadCardImage(f,function(b64){mkPCard('npc',f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});e.target.value='';});
 function mkPCard(type,name,sz,imgB64){
-  var list=document.getElementById('hlist');
-  var cid='c'+(++cardCounter);
-  var card=document.createElement('div');
-  card.className='pc'+(type==='npc'?' ally':'');
-  card.dataset.cardid=cid;card.dataset.name=name;card.dataset.sz=sz;
-  card.dataset.type=type;card.dataset.emoji=type==='player'?'🧙':'🧝';
-  var ci=document.createElement('div');ci.className='ci';
-  if(imgB64){var img=new Image();img.src=imgB64;ci.appendChild(img);}
-  else ci.textContent=card.dataset.emoji;
-  var cn=document.createElement('div');cn.className='cn';cn.textContent=name;
-  card.appendChild(ci);card.appendChild(cn);
+  var list=document.getElementById('hlist'),cid='c'+(++cardCounter);
+  var card=document.createElement('div');card.className='pc'+(type==='npc'?' ally':'');
+  card.dataset.cardid=cid;card.dataset.name=name;card.dataset.sz=sz;card.dataset.type=type;card.dataset.emoji=type==='player'?'🧙':'🧝';
+  var ci=document.createElement('div');ci.className='ci';if(imgB64){var img=new Image();img.src=imgB64;ci.appendChild(img);}else ci.textContent=card.dataset.emoji;
+  var cn=document.createElement('div');cn.className='cn';cn.textContent=name;card.appendChild(ci);card.appendChild(cn);
   card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-  card.addEventListener('mousedown',function(e){
-    if(e.button!==0)return;
-    var sx=e.clientX,sy=e.clientY;
-    function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:card.dataset.type,emoji:card.dataset.emoji,label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}
-    function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
-    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-  });
+  card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:card.dataset.type,emoji:card.dataset.emoji,label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
   list.insertBefore(card,list.querySelectorAll('.apb')[0]);
-  if(window._fbPublishCard) window._fbPublishCard(card,'heroes');
+  if(window._db)window._db.ref('cards/'+cid).set({by:window._ME||'x',panel:'heroes',name:name,sz:sz,type:type,emoji:card.dataset.emoji,portrait:'',cardImg:imgB64||''});
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
-
-// ── CARTAS MONSTRUO ──
-document.getElementById('fmo').addEventListener('change',function(e){
-  var f=e.target.files[0];if(!f)return;
-  loadCardImage(f,function(b64){mkMCard(f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});
-  e.target.value='';
-});
+document.getElementById('fmo').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;loadCardImage(f,function(b64){mkMCard(f.name.replace(/\.[^.]+$/,'').slice(0,16),'mediano',b64);});e.target.value='';});
 function mkMCard(name,sz,imgB64){
-  var list=document.getElementById('clist');
-  var cid='c'+(++cardCounter);
-  var card=document.createElement('div');card.className='mc';
-  card.dataset.cardid=cid;card.dataset.name=name;card.dataset.sz=sz||'mediano';
-  card.dataset.type='enemy';card.dataset.emoji='👹';
-  var ci=document.createElement('div');ci.className='ci';
-  if(imgB64){var img=new Image();img.src=imgB64;ci.appendChild(img);}
-  else ci.textContent='👹';
+  var list=document.getElementById('clist'),cid='c'+(++cardCounter);
+  var card=document.createElement('div');card.className='mc';card.dataset.cardid=cid;card.dataset.name=name;card.dataset.sz=sz||'mediano';card.dataset.type='enemy';card.dataset.emoji='👹';
+  var ci=document.createElement('div');ci.className='ci';if(imgB64){var img=new Image();img.src=imgB64;ci.appendChild(img);}else ci.textContent='👹';
   var cn=document.createElement('div');cn.className='cn';cn.textContent=name;
   var cs=document.createElement('div');cs.className='csz';cs.textContent=(sz||'mediano')+' · '+SZD[sz||'mediano'].f;
   card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
   card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-  card.addEventListener('mousedown',function(e){
-    if(e.button!==0)return;
-    var sx=e.clientX,sy=e.clientY;
-    function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}
-    function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
-    document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-  });
+  card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:cid});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
   list.insertBefore(card,list.querySelector('.amb'));
-  if(window._fbPublishCard) window._fbPublishCard(card,'monsters');
+  if(window._db)window._db.ref('cards/'+cid).set({by:window._ME||'x',panel:'monsters',name:name,sz:sz||'mediano',type:'enemy',emoji:'👹',portrait:'',cardImg:imgB64||''});
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 
-mkMCard('Orco','mediano',null);mkMCard('Dragón','gargantuesco',null);mkMCard('Goblin','pequeño',null);mkMCard('Gigante','enorme',null);
-mkPCard('player','Thorin','mediano',null);mkPCard('player','Lyra','mediano',null);mkPCard('npc','Gandalf','mediano',null);
-
-function startDrag(e,data){
-  var portrait=data.cardid?portraits[data.cardid]:'';
-  var px=spx(data.sz);
-  ghost.innerHTML='';
-  if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}
-  else ghost.textContent=data.emoji;
-  ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:3px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';
-  pdrag={ox:px/2,oy:px/2};pdata=data;
-}
+function startDrag(e,data){var portrait=data.cardid?portraits[data.cardid]:'';var px=spx(data.sz);ghost.innerHTML='';if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}else ghost.textContent=data.emoji;ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:3px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';pdrag={ox:px/2,oy:px/2};pdata=data;}
 
 function mkToken(type,content,label,clientX,clientY,sz,isImg,cardid){
-  var px=spx(sz);
-  var r=bwrap.getBoundingClientRect();
-  var x=(clientX-r.left-vx)/vs-px/2,y=(clientY-r.top-vy)/vs-px/2;
-  var d=document.createElement('div');
-  d.className='token '+type;
-  d.style.cssText='left:'+x+'px;top:'+y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
-  d.dataset.sz=sz;d.dataset.label=label;
-  if(cardid)d.dataset.cardid=cardid;
-  if(isImg&&content){var i=new Image();i.src=content;d.appendChild(i);}
-  else d.textContent=content;
+  var px=spx(sz);var r=bwrap.getBoundingClientRect();var x=(clientX-r.left-vx)/vs-px/2,y=(clientY-r.top-vy)/vs-px/2;
+  var d=document.createElement('div');var tid='t'+(window._ME||'x')+Date.now();
+  d.className='token '+type;d.style.cssText='left:'+x+'px;top:'+y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
+  d.dataset.sz=sz;d.dataset.label=label;d.dataset.tokenid=tid;d.dataset.type=type;if(cardid)d.dataset.cardid=cardid;
+  if(isImg&&content){var i=new Image();i.src=content;d.appendChild(i);}else d.textContent=content;
   var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=label;d.appendChild(lbl);
-  d.addEventListener('mousedown',function(e){
-    if(e.button!==0||spc||editMode)return;
-    e.preventDefault();e.stopPropagation();hideCtx();
-    dtok=d;d.classList.add('drag');
-    var r=d.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;
-  });
+  d.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=d;d.classList.add('drag');var r=d.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
   d.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=d;showCtx(e.clientX,e.clientY);});
   tlayer.appendChild(d);
+  if(window._db)window._db.ref('tokens/'+tid).set({by:window._ME||'x',type:type,label:label,sz:sz,cardid:cardid||'',portrait:isImg?content:'',emoji:isImg?'':content,x:x,y:y});
+  return d;
 }
 
 function showCtx(x,y){ctxEl.style.left=x+'px';ctxEl.style.top=y+'px';ctxEl.classList.add('on');}
 function hideCtx(){ctxEl.classList.remove('on');ctxTok=null;}
 document.addEventListener('click',function(e){if(!ctxEl.contains(e.target))hideCtx();});
 document.addEventListener('contextmenu',function(e){if(!e.target.closest('.token'))e.preventDefault();});
-document.getElementById('ctx-ren').addEventListener('click',function(){
-  if(!ctxTok)return;var n=prompt('Nuevo nombre:',ctxTok.dataset.label);if(!n)return;
-  ctxTok.querySelector('.tlbl').textContent=n;ctxTok.dataset.label=n;hideCtx();
-});
-document.getElementById('ctx-sz').addEventListener('click',function(){
-  if(!ctxTok)return;var s=prompt('Tamaño ('+SZL.join(', ')+'):',ctxTok.dataset.sz);
-  if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}
-  var px=spx(s);ctxTok.style.width=px+'px';ctxTok.style.height=px+'px';ctxTok.style.fontSize=Math.round(px*.4)+'px';ctxTok.dataset.sz=s;hideCtx();
-});
-document.getElementById('ctx-del').addEventListener('click',function(){if(ctxTok){ctxTok.remove();hideCtx();}});
+document.getElementById('ctx-ren').addEventListener('click',function(){if(!ctxTok)return;var n=prompt('Nuevo nombre:',ctxTok.dataset.label);if(!n)return;ctxTok.querySelector('.tlbl').textContent=n;ctxTok.dataset.label=n;hideCtx();});
+document.getElementById('ctx-sz').addEventListener('click',function(){if(!ctxTok)return;var s=prompt('Tamaño ('+SZL.join(', ')+'):',ctxTok.dataset.sz);if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}var px=spx(s);ctxTok.style.width=px+'px';ctxTok.style.height=px+'px';ctxTok.style.fontSize=Math.round(px*.4)+'px';ctxTok.dataset.sz=s;hideCtx();});
+document.getElementById('ctx-del').addEventListener('click',function(){if(!ctxTok)return;if(window._db&&ctxTok.dataset.tokenid)window._db.ref('tokens/'+ctxTok.dataset.tokenid).remove();ctxTok.remove();hideCtx();});
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},3000);}
 
+// AUDIO
+var audioCtx=null,masterGain=null,currentTrack={url:null,name:null,source:null,buffer:null,startTime:0,pauseTime:0,playing:false,loop:false,gainNode:null,listId:null,trackIdx:null},audioLists=[],fxButtons=[],listCounter2=0,progressTimer=null;
+function getACtx(){if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=.7;masterGain.connect(audioCtx.destination);}return audioCtx;}
+document.addEventListener('keydown',function(e){if(e.code==='KeyM'&&e.target.tagName!=='INPUT')document.getElementById('audio-panel').classList.toggle('open');});
+document.getElementById('audio-toggle').addEventListener('click',function(){document.getElementById('audio-panel').classList.toggle('open');});
+function showAudioTab(tab,btn){document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');document.getElementById('tab-music').style.display=tab==='music'?'flex':'none';if(tab==='music'){document.getElementById('tab-music').style.flexDirection='column';document.getElementById('tab-music').style.gap='8px';}document.getElementById('tab-fx').style.display=tab==='fx'?'block':'none';}
+function playTrack(url,name,lid,tidx){var c=getACtx();if(c.state==='suspended')c.resume();var fd=parseFloat(document.getElementById('np-fade-val').value)||0;function startNew(){fetch(url).then(function(r){return r.arrayBuffer();}).then(function(ab){return c.decodeAudioData(ab);}).then(function(buf){if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}var gain=c.createGain();gain.connect(masterGain);var src=c.createBufferSource();src.buffer=buf;src.loop=currentTrack.loop;src.connect(gain);src.start(0);if(fd>0){gain.gain.setValueAtTime(0,c.currentTime);gain.gain.linearRampToValueAtTime(masterGain.gain.value,c.currentTime+fd);}else gain.gain.value=masterGain.gain.value;currentTrack={url:url,name:name,source:src,buffer:buf,startTime:c.currentTime,pauseTime:0,playing:true,loop:currentTrack.loop,gainNode:gain,listId:lid,trackIdx:tidx};src.onended=function(){if(currentTrack.playing&&!currentTrack.loop)audioStop();};document.getElementById('np-title').textContent=name;document.getElementById('np-play').textContent='⏸';startPT();hlTrack(lid,tidx);}).catch(function(){toast('Error al cargar audio');});}if(currentTrack.playing&&currentTrack.gainNode&&fd>0){var g=currentTrack.gainNode;g.gain.cancelScheduledValues(c.currentTime);g.gain.setValueAtTime(g.gain.value,c.currentTime);g.gain.linearRampToValueAtTime(0,c.currentTime+fd);setTimeout(startNew,fd*1000);}else{if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}startNew();}}
+function audioPlayPause(){var c=getACtx();if(!currentTrack.url)return;if(currentTrack.playing){currentTrack.pauseTime=c.currentTime-currentTrack.startTime;if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}currentTrack.playing=false;document.getElementById('np-play').textContent='▶';clearInterval(progressTimer);}else{var gain=c.createGain();gain.connect(masterGain);gain.gain.value=masterGain.gain.value;var src=c.createBufferSource();src.buffer=currentTrack.buffer;src.loop=currentTrack.loop;src.connect(gain);src.start(0,currentTrack.pauseTime);currentTrack.source=src;currentTrack.gainNode=gain;currentTrack.startTime=c.currentTime-currentTrack.pauseTime;currentTrack.playing=true;src.onended=function(){if(currentTrack.playing&&!currentTrack.loop)audioStop();};document.getElementById('np-play').textContent='⏸';startPT();}}
+function audioStop(){if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}currentTrack.playing=false;currentTrack.pauseTime=0;clearInterval(progressTimer);document.getElementById('np-play').textContent='▶';document.getElementById('np-progress').value=0;document.getElementById('np-time').textContent='0:00';document.querySelectorAll('.track-row.playing').forEach(function(r){r.classList.remove('playing');});}
+function audioToggleLoop(){currentTrack.loop=!currentTrack.loop;if(currentTrack.source)currentTrack.source.loop=currentTrack.loop;document.getElementById('np-loop').classList.toggle('on',currentTrack.loop);}
+function audioVol(v){getACtx();masterGain.gain.value=v/100;}
+function audioSeek(v){if(!currentTrack.buffer||!currentTrack.playing)return;var c=getACtx(),st=currentTrack.buffer.duration*(v/100);if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}var gain=c.createGain();gain.connect(masterGain);gain.gain.value=masterGain.gain.value;var src=c.createBufferSource();src.buffer=currentTrack.buffer;src.loop=currentTrack.loop;src.connect(gain);src.start(0,st);currentTrack.source=src;currentTrack.gainNode=gain;currentTrack.startTime=c.currentTime-st;src.onended=function(){if(currentTrack.playing&&!currentTrack.loop)audioStop();};}
+document.getElementById('np-fade-val').addEventListener('input',function(){document.getElementById('np-fade-label').textContent=this.value+'s';});
+function startPT(){clearInterval(progressTimer);progressTimer=setInterval(function(){if(!currentTrack.playing||!currentTrack.buffer)return;var c=getACtx(),el=Math.min(c.currentTime-currentTrack.startTime,currentTrack.buffer.duration);document.getElementById('np-progress').value=(el/currentTrack.buffer.duration)*100;document.getElementById('np-time').textContent=fmtT(el)+' / '+fmtT(currentTrack.buffer.duration);},500);}
+function fmtT(s){s=Math.floor(s);var m=Math.floor(s/60);s=s%60;return m+':'+(s<10?'0':'')+s;}
+function hlTrack(lid,idx){document.querySelectorAll('.track-row').forEach(function(r){r.classList.remove('playing');});var row=document.querySelector('.track-row[data-lid="'+lid+'"][data-tidx="'+idx+'"]');if(row)row.classList.add('playing');}
+function createList(){var name=prompt('Nombre de la lista:');if(!name)return;var id='l'+(++listCounter2);audioLists.push({id:id,name:name,tracks:[]});renderLists();}
+function renderLists(){var container=document.getElementById('lists-container');container.innerHTML='';audioLists.forEach(function(list){var sec=document.createElement('div');sec.className='list-section';var hdr=document.createElement('div');hdr.className='list-header';hdr.innerHTML='<span class="list-name">'+list.name+'</span><span class="list-count">'+list.tracks.length+' pistas</span><span class="list-arrow">▶</span>';var tracks=document.createElement('div');tracks.className='list-tracks';hdr.addEventListener('click',function(){tracks.classList.toggle('open');hdr.querySelector('.list-arrow').classList.toggle('open');});list.tracks.forEach(function(t,idx){var row=document.createElement('div');row.className='track-row';row.dataset.lid=list.id;row.dataset.tidx=idx;if(currentTrack.listId===list.id&&currentTrack.trackIdx===idx)row.classList.add('playing');row.innerHTML='<span class="track-play">▶</span><span class="track-name">'+t.name+'</span><span class="track-dur">'+t.duration+'</span>';row.addEventListener('click',function(){playTrack(t.url,t.name,list.id,idx);});tracks.appendChild(row);});var addBtn=document.createElement('div');addBtn.className='add-track-btn';addBtn.textContent='+ Añadir pistas';addBtn.addEventListener('click',function(){var fi=document.getElementById('f-track');fi.onchange=function(e){Array.from(e.target.files).forEach(function(f){var url=URL.createObjectURL(f);var tmp=new Audio(url);tmp.onloadedmetadata=function(){list.tracks.push({name:f.name.replace(/\.[^.]+$/,''),url:url,duration:fmtT(tmp.duration)});renderLists();};});fi.value='';};fi.click();});tracks.appendChild(addBtn);sec.appendChild(hdr);sec.appendChild(tracks);container.appendChild(sec);});}
+audioLists=[{id:'l'+(++listCounter2),name:'Exploración',tracks:[]},{id:'l'+(++listCounter2),name:'Combate',tracks:[]},{id:'l'+(++listCounter2),name:'Taberna',tracks:[]},{id:'l'+(++listCounter2),name:'Tensión',tracks:[]}];renderLists();
+var defaultFx=[{name:'Espada',emoji:'⚔️'},{name:'Trueno',emoji:'⚡'},{name:'Puerta',emoji:'🚪'},{name:'Fuego',emoji:'🔥'},{name:'Campana',emoji:'🔔'},{name:'Pasos',emoji:'👣'}];defaultFx.forEach(function(fx){fxButtons.push({name:fx.name,emoji:fx.emoji,url:null});});renderFx();
+function renderFx(){var grid=document.getElementById('fx-grid');grid.innerHTML='';fxButtons.forEach(function(fx,i){var btn=document.createElement('div');btn.className='fx-btn'+(fx.url?'':' fx-add');btn.innerHTML='<span class="fx-icon">'+fx.emoji+'</span><span class="fx-label">'+fx.name+'</span>';btn.addEventListener('click',function(){if(fx.url)playFx(fx.url,fx.name);else assignFx(i);});btn.addEventListener('contextmenu',function(e){e.preventDefault();assignFx(i);});grid.appendChild(btn);});}
+function assignFx(idx){var fi=document.getElementById('f-fx');fi.onchange=function(e){var f=e.target.files[0];if(!f)return;fxButtons[idx].url=URL.createObjectURL(f);fxButtons[idx].name=f.name.replace(/\.[^.]+$/,'').slice(0,12);renderFx();fi.value='';};fi.click();}
+function addFxBtn(){var name=prompt('Nombre del efecto:');if(!name)return;fxButtons.push({name:name.slice(0,12),emoji:'🔊',url:null});renderFx();}
+function playFx(url,name){var c=getACtx();if(c.state==='suspended')c.resume();fetch(url).then(function(r){return r.arrayBuffer();}).then(function(ab){return c.decodeAudioData(ab);}).then(function(buf){var gain=c.createGain();gain.connect(masterGain);gain.gain.value=1;var src=c.createBufferSource();src.buffer=buf;src.connect(gain);src.start(0);toast('▶ '+name);}).catch(function(){toast('Error al reproducir');});}
+
+// DADOS
+var dicePrivate=false,dicePlayerName=null,diceAnimTimer=null,notifTimer=null;
+document.addEventListener('keydown',function(e){if(e.code==='KeyD'&&e.target.tagName!=='INPUT')document.getElementById('dice-panel').classList.toggle('open');});
+document.getElementById('dice-toggle').addEventListener('click',function(){document.getElementById('dice-panel').classList.toggle('open');});
+document.getElementById('dice-private-btn').addEventListener('click',function(){dicePrivate=!dicePrivate;this.classList.toggle('on',dicePrivate);this.textContent=dicePrivate?'🔒 Privado':'🔓 Público';});
+function getDiceName(){if(!dicePlayerName){dicePlayerName=prompt('¿Cómo te llamas?','Jugador');if(!dicePlayerName)dicePlayerName='Jugador';}return dicePlayerName;}
+function rollDie(sides,label,icon){var mod=parseInt(document.getElementById('dice-mod-val').value)||0;var roll=Math.floor(Math.random()*sides)+1;var total=roll+mod;var modStr=mod>0?'+'+mod:mod<0?''+mod:'';var detail=label+(modStr||'')+(mod!==0?' ('+roll+modStr+')':'');var special='';if(sides===20){if(roll===20)special='⚡ ¡CRÍTICO!';if(roll===1)special='💀 ¡PIFIA!';}playDiceAnim(icon,total,label+(modStr||''),special,sides,roll);updateDicePanel(total,detail,sides,roll);if(!dicePrivate){var who=getDiceName();addDiceLog(who,label+(modStr||''),total,false,special);if(window._db){var key=window._db.ref('rolls').push().key;window._db.ref('rolls/'+key).set({who:who,sides:sides,roll:roll,mod:mod,total:total,label:label,icon:icon,ts:Date.now()});}}else addDiceLog('DM (privado)',label+(modStr||''),total,true,special);}
+function rollMultiple(){var input=prompt('Tirada (ej: 2d6+3):','2d6');if(!input)return;var m=input.match(/(\d+)d(\d+)([+-]\d+)?/i);if(!m){toast('Formato no válido');return;}var num=parseInt(m[1])||1,sides=parseInt(m[2]),mod=parseInt(m[3])||0;var rolls=[];for(var i=0;i<num;i++)rolls.push(Math.floor(Math.random()*sides)+1);var sum=rolls.reduce(function(a,b){return a+b;},0),total=sum+mod;var modStr=mod>0?'+'+mod:mod<0?''+mod:'';var dl=num+'d'+sides,detail=dl+(modStr||'')+' ['+rolls.join(',')+']';playDiceAnim('🎲',total,dl+(modStr||''),'',sides,sum);updateDicePanel(total,detail,sides,sum);if(!dicePrivate){var who=getDiceName();addDiceLog(who,dl+(modStr||''),total,false,'');if(window._db){var key=window._db.ref('rolls').push().key;window._db.ref('rolls/'+key).set({who:who,sides:sides,roll:sum,mod:mod,total:total,label:dl,icon:'🎲',ts:Date.now()});}}else addDiceLog('DM (privado)',dl+(modStr||''),total,true,'');}
+function playDiceAnim(icon,result,label,special,sides,raw){var ov=document.getElementById('dice-anim');var de=document.getElementById('da-die'),re=document.getElementById('da-num'),le=document.getElementById('da-lbl'),se=document.getElementById('da-spc');[de,re,le,se].forEach(function(el){el.style.animation='none';});ov.classList.remove('show');void ov.offsetWidth;var color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';de.textContent=icon;re.textContent=result;re.style.color=color;le.textContent=label;se.textContent=special;se.style.color=color;[de,re,le,se].forEach(function(el){el.style.animation='';});ov.classList.add('show');clearTimeout(diceAnimTimer);diceAnimTimer=setTimeout(function(){ov.classList.remove('show');},2400);}
+function updateDicePanel(total,detail,sides,raw){var el=document.getElementById('dice-result-num');el.textContent=total;el.style.color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';document.getElementById('dice-result-detail').textContent=detail;}
+function addDiceLog(who,dice,total,isPriv,special){var h=document.getElementById('dice-history');var e=document.createElement('div');e.className='dice-log'+(isPriv?' priv':'');e.innerHTML='<span class="dl-who">'+who+'</span><span class="dl-mid">'+dice+(special?' '+special:'')+'</span><span class="dl-result">'+total+'</span>';h.insertBefore(e,h.firstChild);while(h.children.length>20)h.removeChild(h.lastChild);}
+function showDiceNotif(who,dice,total,sides,raw,special){var n=document.getElementById('dice-notif');document.getElementById('dn-who').textContent=who;document.getElementById('dn-dice').textContent=dice;document.getElementById('dn-result').textContent=total;document.getElementById('dn-detail').textContent=special||'';document.getElementById('dn-result').style.color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';n.classList.remove('show');void n.offsetWidth;n.classList.add('show');clearTimeout(notifTimer);notifTimer=setTimeout(function(){n.classList.remove('show');},3500);}
+
 applyVP();
-
-// ── AUDIO ENGINE ──
-var audioCtx=null;
-var currentTrack={url:null,name:null,source:null,buffer:null,startTime:0,pauseTime:0,playing:false,loop:false,gainNode:null,listId:null,trackIdx:null};
-var masterGain=null;
-var fadeVal=2;
-var audioLists=[];   // [{id,name,tracks:[{name,url,duration}]}]
-var fxButtons=[];    // [{name,url,emoji}]
-var listCounter=0,trackCounter=0;
-var progressTimer=null;
-
-function getAudioCtx(){
-  if(!audioCtx){audioCtx=new(window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0.7;masterGain.connect(audioCtx.destination);}
-  return audioCtx;
-}
-
-// Toggle panel con tecla M
-document.addEventListener('keydown',function(e){
-  if(e.code==='KeyM'&&e.target.tagName!=='INPUT'){
-    document.getElementById('audio-panel').classList.toggle('open');
-  }
-});
-var audioToggleBtn=document.getElementById('audio-toggle');
-if(audioToggleBtn){
-  audioToggleBtn.addEventListener('click',function(){
-    document.getElementById('audio-panel').classList.toggle('open');
-  });
-}
-
-// Tabs
-function showAudioTab(tab,btn){
-  document.querySelectorAll('.atab').forEach(function(b){b.classList.remove('on');});
-  btn.classList.add('on');
-  document.getElementById('tab-music').style.display=tab==='music'?'flex':'none';
-  document.getElementById('tab-music').style.flexDirection='column';
-  document.getElementById('tab-music').style.gap='8px';
-  document.getElementById('tab-fx').style.display=tab==='fx'?'block':'none';
-}
-
-// Fade helper
-function fadeIn(gain,duration){
-  var ctx=getAudioCtx();
-  gain.gain.cancelScheduledValues(ctx.currentTime);
-  gain.gain.setValueAtTime(0,ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(masterGain.gain.value,ctx.currentTime+duration);
-}
-function fadeOut(gain,duration,cb){
-  var ctx=getAudioCtx();
-  gain.gain.cancelScheduledValues(ctx.currentTime);
-  gain.gain.setValueAtTime(gain.gain.value,ctx.currentTime);
-  gain.gain.linearRampToValueAtTime(0,ctx.currentTime+duration);
-  setTimeout(cb,duration*1000);
-}
-
-// Cargar y reproducir pista
-function playTrack(url,name,listId,trackIdx){
-  var ctx=getAudioCtx();
-  if(ctx.state==='suspended')ctx.resume();
-  var fd=parseFloat(document.getElementById('np-fade-val').value)||0;
-
-  function startNew(){
-    fetch(url).then(function(r){return r.arrayBuffer();}).then(function(ab){
-      return ctx.decodeAudioData(ab);
-    }).then(function(buffer){
-      if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}
-      var gain=ctx.createGain();gain.connect(masterGain);
-      var src=ctx.createBufferSource();
-      src.buffer=buffer;src.loop=currentTrack.loop;
-      src.connect(gain);
-      src.start(0);
-      if(fd>0)fadeIn(gain,fd);else gain.gain.value=masterGain.gain.value;
-      currentTrack={url:url,name:name,source:src,buffer:buffer,startTime:ctx.currentTime,pauseTime:0,playing:true,loop:currentTrack.loop,gainNode:gain,listId:listId,trackIdx:trackIdx};
-      src.onended=function(){if(currentTrack.playing&&!currentTrack.loop){audioStop();}};
-      updateNowPlaying();startProgressTimer();
-      highlightTrack(listId,trackIdx);
-    }).catch(function(e){toast('Error al cargar audio');console.error(e);});
-  }
-
-  if(currentTrack.playing&&currentTrack.gainNode&&fd>0){
-    fadeOut(currentTrack.gainNode,fd,startNew);
-  } else {
-    if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}
-    startNew();
-  }
-}
-
-function audioPlayPause(){
-  var ctx=getAudioCtx();
-  if(!currentTrack.url)return;
-  if(currentTrack.playing){
-    // Pause
-    currentTrack.pauseTime=ctx.currentTime-currentTrack.startTime;
-    if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}
-    currentTrack.playing=false;
-    document.getElementById('np-play').textContent='▶';
-    clearInterval(progressTimer);
-  } else {
-    // Resume
-    var gain=ctx.createGain();gain.connect(masterGain);gain.gain.value=masterGain.gain.value;
-    var src=ctx.createBufferSource();
-    src.buffer=currentTrack.buffer;src.loop=currentTrack.loop;src.connect(gain);
-    src.start(0,currentTrack.pauseTime);
-    currentTrack.source=src;currentTrack.gainNode=gain;
-    currentTrack.startTime=ctx.currentTime-currentTrack.pauseTime;
-    currentTrack.playing=true;
-    src.onended=function(){if(currentTrack.playing&&!currentTrack.loop)audioStop();};
-    document.getElementById('np-play').textContent='⏸';
-    startProgressTimer();
-  }
-}
-
-function audioStop(){
-  if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}
-  currentTrack.playing=false;currentTrack.pauseTime=0;
-  clearInterval(progressTimer);
-  document.getElementById('np-play').textContent='▶';
-  document.getElementById('np-progress').value=0;
-  document.getElementById('np-time').textContent='0:00';
-  document.querySelectorAll('.track-row.playing').forEach(function(r){r.classList.remove('playing');});
-}
-
-function audioToggleLoop(){
-  currentTrack.loop=!currentTrack.loop;
-  if(currentTrack.source)currentTrack.source.loop=currentTrack.loop;
-  document.getElementById('np-loop').classList.toggle('on',currentTrack.loop);
-}
-
-function audioVol(v){
-  masterGain=masterGain||getAudioCtx().createGain();
-  masterGain.gain.value=v/100;
-}
-
-function audioSeek(v){
-  if(!currentTrack.buffer||!currentTrack.playing)return;
-  var ctx=getAudioCtx();
-  var seekTo=currentTrack.buffer.duration*(v/100);
-  if(currentTrack.source){try{currentTrack.source.stop();}catch(e){}}
-  var gain=ctx.createGain();gain.connect(masterGain);gain.gain.value=masterGain.gain.value;
-  var src=ctx.createBufferSource();src.buffer=currentTrack.buffer;src.loop=currentTrack.loop;src.connect(gain);
-  src.start(0,seekTo);
-  currentTrack.source=src;currentTrack.gainNode=gain;
-  currentTrack.startTime=ctx.currentTime-seekTo;
-  src.onended=function(){if(currentTrack.playing&&!currentTrack.loop)audioStop();};
-}
-
-document.getElementById('np-fade-val').addEventListener('input',function(){
-  fadeVal=parseFloat(this.value);
-  document.getElementById('np-fade-label').textContent=this.value+'s';
-});
-
-function updateNowPlaying(){
-  document.getElementById('np-title').textContent=currentTrack.name||'Sin pista';
-  document.getElementById('np-play').textContent=currentTrack.playing?'⏸':'▶';
-}
-
-function startProgressTimer(){
-  clearInterval(progressTimer);
-  progressTimer=setInterval(function(){
-    if(!currentTrack.playing||!currentTrack.buffer)return;
-    var ctx=getAudioCtx();
-    var elapsed=ctx.currentTime-currentTrack.startTime;
-    var dur=currentTrack.buffer.duration;
-    if(elapsed>dur){elapsed=dur;}
-    var pct=(elapsed/dur)*100;
-    document.getElementById('np-progress').value=pct;
-    document.getElementById('np-time').textContent=fmtTime(elapsed)+' / '+fmtTime(dur);
-  },500);
-}
-
-function fmtTime(s){
-  s=Math.floor(s);var m=Math.floor(s/60);s=s%60;return m+':'+(s<10?'0':'')+s;
-}
-
-function highlightTrack(listId,trackIdx){
-  document.querySelectorAll('.track-row').forEach(function(r){r.classList.remove('playing');});
-  var row=document.querySelector('.track-row[data-lid="'+listId+'"][data-tidx="'+trackIdx+'"]');
-  if(row)row.classList.add('playing');
-}
-
-// ── LISTAS ──
-function createList(){
-  var name=prompt('Nombre de la lista:');if(!name)return;
-  var id='l'+(++listCounter);
-  audioLists.push({id:id,name:name,tracks:[]});
-  renderLists();
-}
-
-function renderLists(){
-  var container=document.getElementById('lists-container');
-  container.innerHTML='';
-  audioLists.forEach(function(list){
-    var sec=document.createElement('div');sec.className='list-section';
-    var hdr=document.createElement('div');hdr.className='list-header';
-    hdr.innerHTML='<span class="list-name">'+list.name+'</span><span class="list-count">'+list.tracks.length+' pistas</span><span class="list-arrow">▶</span>';
-    var tracks=document.createElement('div');tracks.className='list-tracks';
-    hdr.addEventListener('click',function(){
-      tracks.classList.toggle('open');
-      hdr.querySelector('.list-arrow').classList.toggle('open');
-    });
-    list.tracks.forEach(function(t,idx){
-      var row=document.createElement('div');row.className='track-row';
-      row.dataset.lid=list.id;row.dataset.tidx=idx;
-      if(currentTrack.listId===list.id&&currentTrack.trackIdx===idx)row.classList.add('playing');
-      row.innerHTML='<span class="track-play">▶</span><span class="track-name">'+t.name+'</span><span class="track-dur">'+t.duration+'</span>';
-      row.addEventListener('click',function(){playTrack(t.url,t.name,list.id,idx);});
-      tracks.appendChild(row);
-    });
-    // Botón añadir pistas
-    var addBtn=document.createElement('div');addBtn.className='add-track-btn';addBtn.textContent='+ Añadir pistas a esta lista';
-    addBtn.addEventListener('click',function(){
-      var fi=document.getElementById('f-track');
-      fi.onchange=function(e){
-        var files=Array.from(e.target.files);
-        files.forEach(function(f){
-          var url=URL.createObjectURL(f);
-          // Calcular duración
-          var tmp=new Audio(url);
-          tmp.onloadedmetadata=function(){
-            list.tracks.push({name:f.name.replace(/\.[^.]+$/,''),url:url,duration:fmtTime(tmp.duration)});
-            renderLists();
-          };
-        });
-        fi.value='';
-      };
-      fi.click();
-    });
-    tracks.appendChild(addBtn);
-    sec.appendChild(hdr);sec.appendChild(tracks);
-    container.appendChild(sec);
-  });
-}
-
-// Listas por defecto
-audioLists=[
-  {id:'l'+(++listCounter),name:'Exploración',tracks:[]},
-  {id:'l'+(++listCounter),name:'Combate',tracks:[]},
-  {id:'l'+(++listCounter),name:'Taberna',tracks:[]},
-  {id:'l'+(++listCounter),name:'Tensión',tracks:[]},
-];
-renderLists();
-
-// ── EFECTOS DE SONIDO ──
-var defaultFx=[
-  {name:'Espada',emoji:'⚔️'},{name:'Trueno',emoji:'⚡'},{name:'Puerta',emoji:'🚪'},
-  {name:'Fuego',emoji:'🔥'},{name:'Campana',emoji:'🔔'},{name:'Pasos',emoji:'👣'},
-];
-defaultFx.forEach(function(fx){fxButtons.push({name:fx.name,emoji:fx.emoji,url:null});});
-renderFx();
-
-function renderFx(){
-  var grid=document.getElementById('fx-grid');grid.innerHTML='';
-  fxButtons.forEach(function(fx,i){
-    var btn=document.createElement('div');btn.className='fx-btn'+(fx.url?'':' fx-add');
-    btn.innerHTML='<span class="fx-icon">'+fx.emoji+'</span><span class="fx-label">'+fx.name+'</span>';
-    btn.addEventListener('click',function(){
-      if(fx.url){playFx(fx.url,fx.name);}
-      else{assignFx(i);}
-    });
-    btn.addEventListener('contextmenu',function(e){e.preventDefault();assignFx(i);});
-    grid.appendChild(btn);
-  });
-}
-
-function assignFx(idx){
-  var fi=document.getElementById('f-fx');
-  fi.onchange=function(e){
-    var f=e.target.files[0];if(!f)return;
-    fxButtons[idx].url=URL.createObjectURL(f);
-    fxButtons[idx].name=f.name.replace(/\.[^.]+$/,'').slice(0,12);
-    renderFx();fi.value='';
-  };
-  fi.click();
-}
-
-function addFxBtn(){
-  var name=prompt('Nombre del efecto:');if(!name)return;
-  fxButtons.push({name:name.slice(0,12),emoji:'🔊',url:null});
-  renderFx();
-}
-
-function playFx(url,name){
-  var ctx=getAudioCtx();
-  if(ctx.state==='suspended')ctx.resume();
-  fetch(url).then(function(r){return r.arrayBuffer();}).then(function(ab){
-    return ctx.decodeAudioData(ab);
-  }).then(function(buffer){
-    var gain=ctx.createGain();gain.connect(masterGain);gain.gain.value=1;
-    var src=ctx.createBufferSource();src.buffer=buffer;src.connect(gain);src.start(0);
-    toast('▶ '+name);
-  }).catch(function(){toast('Error al reproducir efecto');});
-}
-
+window.portraits=portraits;
+window._clearAllTokens=function(){if(window._db){window._db.ref('tokens').remove();window._db.ref('cards').remove();}document.querySelectorAll('.token').forEach(function(t){t.remove();});toast('Tablero limpiado');};
+console.log('Para limpiar el tablero: _clearAllTokens()');
 </script>
 
-
-
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-<!-- PANEL DE DADOS -->
-<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
-<div id="dice-panel">
-  <div id="dice-header">
-    <h2>🎲 DADOS</h2>
-    <button id="dice-private-btn">🔒 Privado</button>
-  </div>
-  <div id="dice-body">
-    <div id="dice-grid">
-      <div class="die-btn" onclick="rollDie(4,'d4','🔺')"><span class="die-icon-emoji">🔺</span><span class="die-label">d4</span></div>
-      <div class="die-btn" onclick="rollDie(6,'d6','⬛')"><span class="die-icon-emoji">⬛</span><span class="die-label">d6</span></div>
-      <div class="die-btn" onclick="rollDie(8,'d8','🔷')"><span class="die-icon-emoji">🔷</span><span class="die-label">d8</span></div>
-      <div class="die-btn" onclick="rollDie(10,'d10','🔟')"><span class="die-icon-emoji">🔟</span><span class="die-label">d10</span></div>
-      <div class="die-btn" onclick="rollDie(12,'d12','⬠')"><span class="die-icon-emoji">⬠</span><span class="die-label">d12</span></div>
-      <div class="die-btn" onclick="rollDie(20,'d20','🎯')"><span class="die-icon-emoji">🎯</span><span class="die-label">d20</span></div>
-      <div class="die-btn" onclick="rollDie(100,'d100','💯')"><span class="die-icon-emoji">💯</span><span class="die-label">d100</span></div>
-      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon-emoji">🎲</span><span class="die-label">multi</span></div>
-    </div>
-    <div id="dice-modifier">
-      <label>Modificador:</label>
-      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
-    </div>
-    <div id="dice-result-box">
-      <span id="dice-result-num">—</span>
-      <div id="dice-result-detail"></div>
-    </div>
-    <div id="dice-history"></div>
-  </div>
-</div>
-<div id="dice-anim-overlay">
-  <div id="dice-anim-container">
-    <span id="dice-anim-die"></span>
-    <span id="dice-anim-result"></span>
-    <span id="dice-anim-label"></span>
-    <span id="dice-anim-special"></span>
-  </div>
-</div>
-<div id="dice-notification">
-  <div id="dn-who"></div>
-  <div id="dn-dice"></div>
-  <div id="dn-result"></div>
-  <div id="dn-detail"></div>
-</div>
+<!-- FIREBASE -->
 <script>
-window.addEventListener('load', function(){
-  var cfg={
-    apiKey:"AIzaSyDLN-ZxaCHCo_gPEI20PjaCSqYrr-PtauQ",
-    databaseURL:"https://battlemap-dnd-a22df-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId:"battlemap-dnd-a22df",
-    appId:"1:51829412848:web:440fc4ab9c7fe894490335"
-  };
-  if(!firebase.apps.length) firebase.initializeApp(cfg);
-  var db=firebase.database();
-  window._db=db;
-  var ME='u'+Math.random().toString(36).slice(2,8);
-  console.log('Firebase OK, id:',ME);
-  toast('🔥 Multijugador activo');
+window.addEventListener('load',function(){
+  var cfg={apiKey:"AIzaSyDLN-ZxaCHCo_gPEI20PjaCSqYrr-PtauQ",databaseURL:"https://battlemap-dnd-a22df-default-rtdb.europe-west1.firebasedatabase.app",projectId:"battlemap-dnd-a22df",appId:"1:51829412848:web:440fc4ab9c7fe894490335"};
+  if(!firebase.apps.length)firebase.initializeApp(cfg);
+  var db=firebase.database();window._db=db;window._ME='u'+Math.random().toString(36).slice(2,8);
+  console.log('Firebase OK id:',window._ME);toast('🔥 Multijugador activo');
 
-  // ── HELPERS ──
-  function spxLocal(sz){return Math.round(((window.SZD&&window.SZD[sz]?window.SZD[sz].c:1))*26);}
-
-  // ── PUBLICAR CARTA ──
-  window._fbPublishCard=function(card,panel){
-    if(!card||!card.dataset.cardid) return;
-    var cid=card.dataset.cardid;
-    var ci=card.querySelector('.ci');
-    var imgSrc='';
-    if(ci&&ci.querySelector('img')) imgSrc=ci.querySelector('img').src;
-    db.ref('cards/'+cid).set({
-      by:ME, panel:panel,
-      name:card.dataset.name||'',
-      sz:card.dataset.sz||'mediano',
-      type:card.dataset.type||'enemy',
-      emoji:card.dataset.emoji||'👹',
-      portrait:window.portraits?(window.portraits[cid]||''):'',
-      cardImg:imgSrc
-    });
-  };
-
-  // ── PUBLICAR RETRATO ──
-  window._fbPublishPortrait=function(cid,portrait){
-    db.ref('cards/'+cid).update({portrait:portrait});
-    // Actualizar tokens con este cardid
-    db.ref('tokens').once('value',function(snap){
-      snap.forEach(function(child){
-        if(child.val().cardid===cid) db.ref('tokens/'+child.key).update({portrait:portrait});
-      });
-    });
-  };
-
-  // ── PUBLICAR TOKEN ──
-  window._fbPublishToken=function(tid,type,label,sz,cardid,portrait,emoji,x,y){
-    db.ref('tokens/'+tid).set({by:ME,type:type,label:label,sz:sz,cardid:cardid||'',portrait:portrait||'',emoji:emoji||'',x:x,y:y});
-  };
-
-  // ── PUBLICAR POSICIÓN ──
-  window._fbMoveToken=function(tid,x,y){
-    db.ref('tokens/'+tid+'/pos').set({x:x,y:y,by:ME});
-  };
-
-  // ── LIMPIAR TODO ──
-  window._clearAllTokens=function(){
-    db.ref('tokens').remove();
-    db.ref('cards').remove();
-    document.querySelectorAll('.token').forEach(function(t){t.remove();});
-    document.querySelectorAll('.pc:not(.apb),.mc:not(.amb)').forEach(function(c){
-      if(!c.classList.contains('apb')&&!c.classList.contains('al')) c.remove();
-    });
-    toast('Tablero limpiado');
-  };
-  console.log('Para limpiar: _clearAllTokens()');
-
-  // ── ESCUCHAR CARTAS ──
+  // CARTAS
   db.ref('cards').on('child_added',function(snap){
-    var d=snap.val(); if(!d||d.by===ME) return;
-    if(document.querySelector('[data-cardid="'+snap.key+'"]')) return;
-    if(d.panel==='heroes') addRemoteHeroCard(d,snap.key);
-    else addRemoteMonsterCard(d,snap.key);
+    var d=snap.val();if(!d||d.by===window._ME)return;
+    if(document.querySelector('[data-cardid="'+snap.key+'"]'))return;
+    if(d.panel==='heroes')addRHero(d,snap.key);else addRMonster(d,snap.key);
   });
-
   db.ref('cards').on('child_changed',function(snap){
-    var d=snap.val(); if(!d||d.by===ME) return;
-    var card=document.querySelector('[data-cardid="'+snap.key+'"]');
-    if(!card) return;
-    if(d.name){card.dataset.name=d.name; var cn=card.querySelector('.cn'); if(cn)cn.textContent=d.name;}
-    if(d.sz){card.dataset.sz=d.sz; var cs=card.querySelector('.csz'); if(cs)cs.textContent=d.sz;}
-    if(d.portrait){
-      // actualizar tokens remotos con este cardid
-      document.querySelectorAll('.token[data-cardid="'+snap.key+'"]').forEach(function(tok){
-        var lbl=tok.querySelector('.tlbl'); tok.innerHTML='';
-        var ti=new Image(); ti.src=d.portrait; tok.appendChild(ti);
-        if(lbl)tok.appendChild(lbl);
-      });
-    }
+    var d=snap.val();if(!d||d.by===window._ME)return;
+    var card=document.querySelector('[data-cardid="'+snap.key+'"]');if(!card)return;
+    if(d.name){card.dataset.name=d.name;var cn=card.querySelector('.cn');if(cn)cn.textContent=d.name;}
+    if(d.portrait){document.querySelectorAll('.token[data-cardid="'+snap.key+'"]').forEach(function(tok){var lbl=tok.querySelector('.tlbl');tok.innerHTML='';var ti=new Image();ti.src=d.portrait;tok.appendChild(ti);if(lbl)tok.appendChild(lbl);});}
   });
+  db.ref('cards').on('child_removed',function(snap){var el=document.querySelector('[data-cardid="'+snap.key+'"][data-remote="1"]');if(el)el.remove();});
 
-  db.ref('cards').on('child_removed',function(snap){
-    var el=document.querySelector('[data-cardid="'+snap.key+'"][data-remote="1"]');
-    if(el)el.remove();
-  });
-
-  // ── ESCUCHAR TOKENS ──
-  db.ref('tokens').on('child_added',function(snap){
-    var d=snap.val(); if(!d||d.by===ME) return;
-    if(document.querySelector('.token[data-tokenid="'+snap.key+'"]')) return;
-    addRemoteToken(d,snap.key);
-  });
-
-  db.ref('tokens').on('child_changed',function(snap){
-    var d=snap.val(); if(!d) return;
-    var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');
-    if(!tok) return;
-    // Solo actualizar posición si viene de otro cliente
-    if(d.pos&&d.pos.by!==ME){
-      tok.style.left=d.pos.x+'px';
-      tok.style.top=d.pos.y+'px';
-    }
-    // Actualizar retrato si cambia
-    if(d.portrait&&d.by!==ME){
-      var lbl=tok.querySelector('.tlbl'); tok.innerHTML='';
-      var ti=new Image(); ti.src=d.portrait; tok.appendChild(ti);
-      if(lbl)tok.appendChild(lbl);
-    }
-  });
-
-  db.ref('tokens').on('child_removed',function(snap){
-    var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');
-    if(tok)tok.remove();
-  });
-
-  // ── CREAR CARTA HÉROE REMOTA ──
-  function addRemoteHeroCard(d,id){
-    var list=document.getElementById('hlist');
-    var card=document.createElement('div');
-    card.className='pc'+(d.type==='npc'?' ally':'');
-    card.dataset.cardid=id; card.dataset.remote='1';
-    card.dataset.name=d.name; card.dataset.sz=d.sz;
-    card.dataset.type=d.type; card.dataset.emoji=d.emoji;
-    var ci=document.createElement('div'); ci.className='ci';
-    if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
-    else ci.textContent=d.emoji||'🧙';
-    var cn=document.createElement('div'); cn.className='cn'; cn.textContent=d.name;
-    card.appendChild(ci); card.appendChild(cn);
+  function addRHero(d,id){
+    var list=document.getElementById('hlist');var card=document.createElement('div');card.className='pc'+(d.type==='npc'?' ally':'');
+    card.dataset.cardid=id;card.dataset.remote='1';card.dataset.name=d.name;card.dataset.sz=d.sz;card.dataset.type=d.type;card.dataset.emoji=d.emoji||'🧙';
+    var ci=document.createElement('div');ci.className='ci';if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}else ci.textContent=d.emoji||'🧙';
+    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;card.appendChild(ci);card.appendChild(cn);
     card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-    card.addEventListener('mousedown',function(e){
-      if(e.button!==0)return;
-      var sx=e.clientX,sy=e.clientY;
-      function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
-        document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
-        startDrag(e,{type:d.type,emoji:d.emoji,label:card.dataset.name,sz:card.dataset.sz,cardid:id});
-      }}
-      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
-      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-    });
+    card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:d.type,emoji:d.emoji||'🧙',label:card.dataset.name,sz:card.dataset.sz,cardid:id});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
     list.insertBefore(card,list.querySelectorAll('.apb')[0]);
   }
-
-  // ── CREAR CARTA MONSTRUO REMOTA ──
-  function addRemoteMonsterCard(d,id){
-    var list=document.getElementById('clist');
-    var card=document.createElement('div'); card.className='mc';
-    card.dataset.cardid=id; card.dataset.remote='1';
-    card.dataset.name=d.name; card.dataset.sz=d.sz||'mediano';
-    card.dataset.type='enemy'; card.dataset.emoji=d.emoji||'👹';
-    var ci=document.createElement('div'); ci.className='ci';
-    if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}
-    else ci.textContent=d.emoji||'👹';
-    var cn=document.createElement('div'); cn.className='cn'; cn.textContent=d.name;
-    var cs=document.createElement('div'); cs.className='csz'; cs.textContent=(d.sz||'mediano');
-    card.appendChild(ci); card.appendChild(cn); card.appendChild(cs);
+  function addRMonster(d,id){
+    var list=document.getElementById('clist');var card=document.createElement('div');card.className='mc';
+    card.dataset.cardid=id;card.dataset.remote='1';card.dataset.name=d.name;card.dataset.sz=d.sz||'mediano';card.dataset.type='enemy';card.dataset.emoji=d.emoji||'👹';
+    var ci=document.createElement('div');ci.className='ci';if(d.cardImg){var img=new Image();img.src=d.cardImg;ci.appendChild(img);}else ci.textContent=d.emoji||'👹';
+    var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
+    card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
     card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
-    card.addEventListener('mousedown',function(e){
-      if(e.button!==0)return;
-      var sx=e.clientX,sy=e.clientY;
-      function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){
-        document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);
-        startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:id});
-      }}
-      function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}
-      document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);
-    });
+    card.addEventListener('mousedown',function(e){if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;function mv(ev){if(Math.abs(ev.clientX-sx)>6||Math.abs(ev.clientY-sy)>6){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);startDrag(e,{type:'enemy',emoji:d.emoji||'👹',label:card.dataset.name,sz:card.dataset.sz,cardid:id});}}function up(){document.removeEventListener('mousemove',mv);document.removeEventListener('mouseup',up);}document.addEventListener('mousemove',mv);document.addEventListener('mouseup',up);});
     list.insertBefore(card,list.querySelector('.amb'));
   }
 
-  // ── CREAR TOKEN REMOTO ──
-  function addRemoteToken(d,tid){
-    var px=spxLocal(d.sz);
-    var el=document.createElement('div');
-    el.className='token '+(d.type||'enemy');
+  // TOKENS
+  db.ref('tokens').on('child_added',function(snap){
+    var d=snap.val();if(!d||d.by===window._ME)return;
+    if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
+    addRToken(d,snap.key);
+  });
+  db.ref('tokens').on('child_changed',function(snap){
+    var d=snap.val();if(!d)return;var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
+    if(d.pos&&d.pos.by!==window._ME){tok.style.left=d.pos.x+'px';tok.style.top=d.pos.y+'px';}
+    if(d.portrait&&d.by!==window._ME){var lbl=tok.querySelector('.tlbl');tok.innerHTML='';var ti=new Image();ti.src=d.portrait;tok.appendChild(ti);if(lbl)tok.appendChild(lbl);}
+  });
+  db.ref('tokens').on('child_removed',function(snap){var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(tok)tok.remove();});
+
+  function addRToken(d,tid){
+    var px=spx(d.sz);var el=document.createElement('div');el.className='token '+(d.type||'enemy');
     el.style.cssText='left:'+d.x+'px;top:'+d.y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
-    el.dataset.sz=d.sz; el.dataset.label=d.label; el.dataset.tokenid=tid;
-    el.dataset.type=d.type||'enemy'; el.dataset.cardid=d.cardid||'';
-    if(d.portrait){var i=new Image();i.src=d.portrait;el.appendChild(i);}
-    else el.textContent=d.emoji||'👹';
-    var lbl=document.createElement('div'); lbl.className='tlbl'; lbl.textContent=d.label;
-    el.appendChild(lbl);
-    // Todos pueden mover cualquier token
-    el.addEventListener('mousedown',function(e){
-      if(e.button!==0||window.spc||window.editMode)return;
-      e.preventDefault(); e.stopPropagation();
-      if(typeof hideCtx==='function')hideCtx();
-      window.dtok=el; el.classList.add('drag');
-      var r=el.getBoundingClientRect();
-      window.dox=(e.clientX-r.left)/window.vs;
-      window.doy=(e.clientY-r.top)/window.vs;
-    });
-    el.addEventListener('contextmenu',function(e){
-      e.preventDefault(); e.stopPropagation();
-      window.ctxTok=el;
-      if(typeof showCtx==='function')showCtx(e.clientX,e.clientY);
-    });
+    el.dataset.sz=d.sz;el.dataset.label=d.label;el.dataset.tokenid=tid;el.dataset.type=d.type||'enemy';el.dataset.cardid=d.cardid||'';
+    if(d.portrait){var i=new Image();i.src=d.portrait;el.appendChild(i);}else el.textContent=d.emoji||'👹';
+    var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=d.label;el.appendChild(lbl);
+    el.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=el;el.classList.add('drag');var r=el.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
+    el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=el;showCtx(e.clientX,e.clientY);});
     tlayer.appendChild(el);
   }
 
-  // ── SINCRONIZAR MOVIMIENTO ──
-  document.addEventListener('mouseup',function(){
-    if(window.dtok&&window.dtok.dataset&&window.dtok.dataset.tokenid){
-      var x=parseFloat(window.dtok.style.left);
-      var y=parseFloat(window.dtok.style.top);
-      db.ref('tokens/'+window.dtok.dataset.tokenid+'/pos').set({x:x,y:y,by:ME});
-    }
-  },true);
-
-  // ── ELIMINAR TOKEN ──
-  document.getElementById('ctx-del').addEventListener('click',function(){
-    if(window.ctxTok&&window.ctxTok.dataset.tokenid){
-      db.ref('tokens/'+window.ctxTok.dataset.tokenid).remove();
-    }
-  });
-
-  // ── ELIMINAR CARTA ──
-  document.getElementById('cpb-del').addEventListener('click',function(){
-    if(window.selCard&&window.selCard.dataset.cardid&&!window.selCard.dataset.remote){
-      db.ref('cards/'+window.selCard.dataset.cardid).remove();
-    }
-  });
-
-  // ── HOOKS en mkToken ──
-  var _origMkToken=window.mkToken;
-  if(typeof mkToken!=='undefined'){
-    var origRef=mkToken;
-    window.mkToken=function(type,content,label,clientX,clientY,sz,isImg,cardid){
-      var px=spxLocal(sz);
-      var r=bwrap.getBoundingClientRect();
-      var x=(clientX-r.left-vx)/vs-px/2, y=(clientY-r.top-vy)/vs-px/2;
-      var d=document.createElement('div');
-      var tid='t'+ME+Date.now();
-      d.className='token '+type;
-      d.style.cssText='left:'+x+'px;top:'+y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
-      d.dataset.sz=sz; d.dataset.label=label; d.dataset.tokenid=tid; d.dataset.type=type;
-      if(cardid)d.dataset.cardid=cardid;
-      if(isImg&&content){var i=new Image();i.src=content;d.appendChild(i);}
-      else d.textContent=content;
-      var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=label;d.appendChild(lbl);
-      d.addEventListener('mousedown',function(e){
-        if(e.button!==0||spc||editMode)return;
-        e.preventDefault();e.stopPropagation();hideCtx();
-        dtok=d;d.classList.add('drag');
-        window.dtok=d;
-        var r=d.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;
-        window.dox=dox;window.doy=doy;
-      });
-      d.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=d;window.ctxTok=d;showCtx(e.clientX,e.clientY);});
-      tlayer.appendChild(d);
-      db.ref('tokens/'+tid).set({by:ME,type:type,label:label,sz:sz,cardid:cardid||'',
-        portrait:isImg?content:'',emoji:isImg?'':content,x:x,y:y});
-      return d;
-    };
-  }
-});
-</script>
-
-
-
-<script>
-// ── SISTEMA DE DADOS ──
-var dicePrivate=false;
-var dicePlayerName=null;
-var diceAnimTimer=null;
-var notifTimer=null;
-
-// Iconos por tipo de dado — reemplaza las URLs por tus imágenes
-var diceIcons={
-  d4:'🔺', d6:'⬛', d8:'🔷', d10:'🔟', d12:'⬠', d20:'🎯', d100:'💯'
-};
-
-function getDicePlayerName(){
-  if(!dicePlayerName){
-    dicePlayerName=prompt('¿Cómo te llamas? (aparecerá en las tiradas)','Jugador');
-    if(!dicePlayerName) dicePlayerName='Jugador';
-  }
-  return dicePlayerName;
-}
-
-// Toggle panel tecla D
-document.addEventListener('keydown',function(e){
-  if(e.code==='KeyD'&&e.target.tagName!=='INPUT'){
-    document.getElementById('dice-panel').classList.toggle('open');
-  }
-});
-document.getElementById('dice-toggle').addEventListener('click',function(){
-  document.getElementById('dice-panel').classList.toggle('open');
-});
-
-// Modo privado
-document.getElementById('dice-private-btn').addEventListener('click',function(){
-  dicePrivate=!dicePrivate;
-  this.classList.toggle('on',dicePrivate);
-  this.textContent=dicePrivate?'🔒 Privado':'🔓 Público';
-});
-
-// ── TIRAR DADO ──
-function rollDie(sides,diceLabel,icon){
-  var mod=parseInt(document.getElementById('dice-mod-val').value)||0;
-  var roll=Math.floor(Math.random()*sides)+1;
-  var total=roll+mod;
-  var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-  var detail=diceLabel+(modStr?modStr:'')+(mod!==0?' = '+roll+modStr:'');
-  var special='';
-  if(sides===20){
-    if(roll===20) special='⚡ ¡CRÍTICO!';
-    if(roll===1)  special='💀 ¡PIFIA!';
-  }
-
-  // Animación local
-  playDiceAnimation(icon||'🎲', total, diceLabel+(modStr||''), special, sides, roll);
-
-  // Actualizar panel
-  updateDicePanel(total, detail, sides, roll);
-
-  if(!dicePrivate){
-    var who=getDicePlayerName();
-    addToHistory(who, diceLabel+(modStr||''), total, false, special);
-    publishRoll(who, sides, roll, mod, total, 1, [roll], diceLabel, icon);
-  } else {
-    addToHistory('DM (privado)', diceLabel+(modStr||''), total, true, special);
-  }
-}
-
-// ── TIRADA MÚLTIPLE ──
-function rollMultiple(){
-  var input=prompt('Tirada (ej: 2d6+3, 1d20-1):','2d6');
-  if(!input) return;
-  var match=input.match(/(\d+)d(\d+)([+-]\d+)?/i);
-  if(!match){toast('Formato no válido. Usa: 2d6+3');return;}
-  var num=parseInt(match[1])||1;
-  var sides=parseInt(match[2]);
-  var mod=parseInt(match[3])||0;
-  var rolls=[];
-  for(var i=0;i<num;i++) rolls.push(Math.floor(Math.random()*sides)+1);
-  var sum=rolls.reduce(function(a,b){return a+b;},0);
-  var total=sum+mod;
-  var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-  var diceLabel=num+'d'+sides;
-  var detail=diceLabel+(modStr||'')+' = ['+rolls.join(',')+']'+(mod?modStr:'');
-
-  playDiceAnimation('🎲', total, diceLabel+(modStr||''), '', sides, sum);
-  updateDicePanel(total, detail, sides, sum);
-
-  if(!dicePrivate){
-    var who=getDicePlayerName();
-    addToHistory(who, diceLabel+(modStr||''), total, false, '');
-    publishRoll(who, sides, sum, mod, total, num, rolls, diceLabel, '🎲');
-  } else {
-    addToHistory('DM (privado)', diceLabel+(modStr||''), total, true, '');
-  }
-}
-
-// ── ANIMACIÓN REBOTE ──
-function playDiceAnimation(icon, result, label, special, sides, raw){
-  var overlay=document.getElementById('dice-anim-overlay');
-  var dieEl=document.getElementById('dice-anim-die');
-  var resEl=document.getElementById('dice-anim-result');
-  var lblEl=document.getElementById('dice-anim-label');
-  var spcEl=document.getElementById('dice-anim-special');
-
-  // Reset animación
-  dieEl.style.animation='none';
-  resEl.style.animation='none';
-  lblEl.style.animation='none';
-  spcEl.style.animation='none';
-  overlay.classList.remove('show');
-
-  // Color resultado
-  var color='#c9a84c';
-  if(sides===20&&raw===20) color='#4aff8a';
-  if(sides===20&&raw===1)  color='#ff4a4a';
-
-  // Trigger reflow
-  void overlay.offsetWidth;
-
-  dieEl.textContent=icon;
-  resEl.textContent=result;
-  resEl.style.color=color;
-  lblEl.textContent=label;
-  spcEl.textContent=special;
-  spcEl.style.color=color;
-
-  // Restaurar animaciones
-  dieEl.style.animation='';
-  resEl.style.animation='';
-  lblEl.style.animation='';
-  spcEl.style.animation='';
-
-  overlay.classList.add('show');
-
-  clearTimeout(diceAnimTimer);
-  diceAnimTimer=setTimeout(function(){
-    overlay.classList.remove('show');
-  },2200);
-}
-
-// ── ACTUALIZAR PANEL ──
-function updateDicePanel(total, detail, sides, raw){
-  var el=document.getElementById('dice-result-num');
-  el.textContent=total;
-  el.style.color='#c9a84c';
-  if(sides===20&&raw===20) el.style.color='#4aff8a';
-  if(sides===20&&raw===1)  el.style.color='#ff4a4a';
-  document.getElementById('dice-result-detail').textContent=detail;
-}
-
-// ── HISTORIAL ──
-function addToHistory(who, dice, total, isPrivate, special){
-  var history=document.getElementById('dice-history');
-  var entry=document.createElement('div');
-  entry.className='dice-log'+(isPrivate?' private':'');
-  var txt=special?' '+special:'';
-  entry.innerHTML='<span class="dl-who">'+who+'</span><span>'+dice+txt+'</span><span class="dl-result">'+total+'</span>';
-  history.insertBefore(entry,history.firstChild);
-  while(history.children.length>20) history.removeChild(history.lastChild);
-}
-
-// ── PUBLICAR EN FIREBASE ──
-function publishRoll(who,sides,roll,mod,total,num,rolls,diceLabel,icon){
-  if(window._db){
-    var key=window._db.ref('rolls').push().key;
-    window._db.ref('rolls/'+key).set({
-      who:who,sides:sides,roll:roll,mod:mod||0,total:total,
-      num:num||1,rolls:rolls||[roll],
-      diceLabel:diceLabel||('d'+sides),
-      icon:icon||'🎲',
-      ts:Date.now()
-    });
-  }
-}
-
-// ── ESCUCHAR TIRADAS DE OTROS ──
-window.addEventListener('load',function(){
-  if(!window._db) return;
+  // DADOS — escuchar tiradas de otros
   setTimeout(function(){
-    window._db.ref('rolls').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
-      if(!window._diceReady) return;
-      var d=snap.val();
-      if(!d) return;
-      var mod=d.mod||0;
-      var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
-      var detail=d.diceLabel+(modStr||'');
-      var special='';
-      if(d.sides===20&&d.roll===20) special='⚡ ¡CRÍTICO!';
-      if(d.sides===20&&d.roll===1)  special='💀 ¡PIFIA!';
-      addToHistory(d.who, detail, d.total, false, special);
-      showPublicNotification(d.who, detail, d.total, d.sides, d.roll, special);
+    db.ref('rolls').orderByChild('ts').limitToLast(50).on('child_added',function(snap){
+      if(!window._diceReady)return;var d=snap.val();if(!d)return;
+      var mod=d.mod||0,modStr=mod>0?'+'+mod:mod<0?''+mod:'',detail=d.label+(modStr||'');
+      var special='';if(d.sides===20&&d.roll===20)special='⚡ ¡CRÍTICO!';if(d.sides===20&&d.roll===1)special='💀 ¡PIFIA!';
+      addDiceLog(d.who,detail,d.total,false,special);
+      showDiceNotif(d.who,detail,d.total,d.sides,d.roll,special);
     });
     window._diceReady=true;
   },1200);
 });
-
-// ── NOTIFICACIÓN PÚBLICA (para tiradas de otros) ──
-function showPublicNotification(who, dice, total, sides, raw, special){
-  var notif=document.getElementById('dice-notification');
-  document.getElementById('dn-who').textContent=who;
-  document.getElementById('dn-dice').textContent=dice;
-  document.getElementById('dn-result').textContent=total;
-  document.getElementById('dn-detail').textContent=special||'';
-  var color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';
-  document.getElementById('dn-result').style.color=color;
-  notif.classList.remove('show');
-  void notif.offsetWidth;
-  notif.classList.add('show');
-  clearTimeout(notifTimer);
-  notifTimer=setTimeout(function(){notif.classList.remove('show');},3500);
-}
 </script>
 </body>
 </html>
