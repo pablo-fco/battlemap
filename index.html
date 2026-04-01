@@ -210,6 +210,19 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .fog-size-btn{background:#1a1209;border:1px solid #2a1f0e;color:#e8d5a3;font-size:10px;padding:5px 8px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;text-align:center;}
 .fog-size-btn:hover{border-color:#4a9eff;color:#4a9eff;}
 #fog-hint{font-size:9px;color:#5c3d1a;letter-spacing:.5px;line-height:1.5;}
+
+/* ── ESCENAS ── */
+#scene-bar{background:#080604;border-bottom:1px solid #3d2a0e;padding:0 14px;display:flex;align-items:center;gap:6px;flex-shrink:0;overflow-x:auto;min-height:36px;}
+#scene-bar::-webkit-scrollbar{height:3px;}
+#scene-bar::-webkit-scrollbar-thumb{background:#2a1f0e;}
+.scene-tab{flex-shrink:0;padding:6px 14px;font-size:11px;color:#8a6a30;letter-spacing:1px;cursor:pointer;border-bottom:2px solid transparent;font-family:Georgia,serif;white-space:nowrap;user-select:none;position:relative;}
+.scene-tab:hover{color:#c9a84c;}
+.scene-tab.active{color:#c9a84c;border-bottom-color:#c9a84c;}
+.scene-tab .scene-del{display:none;position:absolute;top:2px;right:2px;font-size:8px;color:#ff4a4a;line-height:1;cursor:pointer;}
+.scene-tab:hover .scene-del{display:block;}
+#scene-add{flex-shrink:0;padding:6px 10px;font-size:16px;color:#3d2a0e;cursor:pointer;border:none;background:none;}
+#scene-add:hover{color:#c9a84c;}
+#scene-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#c9a84c;font-size:13px;letter-spacing:2px;z-index:50;display:none;pointer-events:none;}
 </style>
 </head>
 <body>
@@ -221,6 +234,13 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
     <button class="btn" onclick="resetView()">⌖ Reset</button>
     <button class="btn" onclick="document.getElementById('fm').click()">🗺 Subir mapa</button>
   </div>
+  <div id="scene-bar">
+    <div class="scene-tab active" data-sceneid="scene1">
+      Escena 1<span class="scene-del" onclick="deleteScene(event,'scene1')">✕</span>
+    </div>
+    <button id="scene-add" onclick="addScene()" title="Nueva escena">+</button>
+  </div>
+  <div id="scene-loading">Cargando escena...</div>
   <div id="ptop">
     <div id="ptop-lbl">HÉROES</div>
     <div id="hlist">
@@ -369,7 +389,7 @@ function applyMap(){miEl.style.left=mx+'px';miEl.style.top=my+'px';miEl.style.wi
 function updateEov(){if(!editMode||!miEl.src||miEl.style.display==='none'){eov.classList.remove('on');return;}eov.style.left=(vx+mx*vs)+'px';eov.style.top=(vy+my*vs)+'px';eov.style.width=(mw*ms*vs)+'px';eov.style.height=(mh*ms*vs)+'px';eov.classList.add('on');}
 
 document.getElementById('fm').addEventListener('change',function(e){var f=e.target.files[0];if(!f)return;var fr=new FileReader();fr.onload=function(ev){var b64=ev.target.result;var t=new Image();t.onload=function(){mw=t.naturalWidth;mh=t.naturalHeight;ms=1;mx=0;my=0;miEl.src=b64;miEl.style.display='block';document.getElementById('bighint').style.display='none';applyMap();applyVP();toast('Mapa cargado');// Publicar mapa en Firebase
-if(window._db)window._db.ref('map').set({b64:b64,w:mw,h:mh});};t.src=b64;};fr.readAsDataURL(f);e.target.value='';});
+if(window._db)window._db.ref('scenes/'+currentSceneId+'/map').set({src:b64,w:mw,h:mh,mx:mx,my:my,ms:ms,vx:vx,vy:vy,vs:vs});};t.src=b64;};fr.readAsDataURL(f);e.target.value='';});
 function toggleMode(){editMode=!editMode;var b=document.getElementById('mbtn'),h=document.getElementById('hint-mode');if(editMode){b.classList.add('on');b.textContent='🔍 Modo Ver';h.textContent='✏ Editar · drag=mover · esquina=escalar · rueda=zoom';updateEov();}else{b.classList.remove('on');b.textContent='✏ Editar mapa';h.textContent='🔍 Ver · rueda=zoom · espacio+drag=mover';eov.classList.remove('on');}}
 
 bwrap.addEventListener('wheel',function(e){e.preventDefault();if(editMode){ms=Math.max(.05,Math.min(10,ms*(e.deltaY>0?.95:1.05)));applyMap();return;}var r=bwrap.getBoundingClientRect(),px=e.clientX-r.left,py=e.clientY-r.top;var f=e.deltaY>0?.9:1.1,ns=Math.min(5,Math.max(.1,vs*f));vx=px-(px-vx)*(ns/vs);vy=py-(py-vy)*(ns/vs);vs=ns;applyVP();},{passive:false});
@@ -395,8 +415,7 @@ document.addEventListener('mouseup',function(e){
       var _px=parseInt(dtok.style.width)||spx(dtok.dataset.sz||'mediano');
       var _cx=parseFloat(dtok.style.left)+_px/2;
       var _cy=parseFloat(dtok.style.top)+_px/2;
-      window._db.ref('tokens/'+dtok.dataset.tokenid+'/pos').set({cx:_cx,cy:_cy,by:window._ME||'x'});
-      window._db.ref('tokens/'+dtok.dataset.tokenid).update({x:parseFloat(dtok.style.left),y:parseFloat(dtok.style.top)});
+      window._db.ref('scenes/'+currentSceneId+'/tokens/'+dtok.dataset.tokenid+'/pos').set({cx:_cx,cy:_cy,by:window._ME||'x'});
     }
     dtok.classList.remove('drag');dtok=null;
   }
@@ -483,7 +502,7 @@ function mkToken(type,content,label,clientX,clientY,sz,isImg,cardid){
   d.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=d;d.classList.add('drag');var r=d.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
   d.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=d;showCtx(e.clientX,e.clientY);});
   tlayer.appendChild(d);
-  if(window._db)window._db.ref('tokens/'+tid).set({by:window._ME||'x',type:type,label:label,sz:sz,cardid:cardid||'',portrait:isImg?content:'',emoji:isImg?'':content,x:x,y:y,cx:x+px/2,cy:y+px/2});
+  if(window._db)window._db.ref('scenes/'+currentSceneId+'/tokens/'+tid).set({by:window._ME||'x',type:type,label:label,sz:sz,cardid:cardid||'',portrait:isImg?content:'',emoji:isImg?'':content,x:x,y:y,cx:x+px/2,cy:y+px/2});
   return d;
 }
 
@@ -493,7 +512,7 @@ document.addEventListener('click',function(e){if(!ctxEl.contains(e.target))hideC
 document.addEventListener('contextmenu',function(e){if(!e.target.closest('.token'))e.preventDefault();});
 document.getElementById('ctx-ren').addEventListener('click',function(){if(!ctxTok)return;var n=prompt('Nuevo nombre:',ctxTok.dataset.label);if(!n)return;ctxTok.querySelector('.tlbl').textContent=n;ctxTok.dataset.label=n;hideCtx();});
 document.getElementById('ctx-sz').addEventListener('click',function(){if(!ctxTok)return;var s=prompt('Tamaño ('+SZL.join(', ')+'):',ctxTok.dataset.sz);if(!s||SZL.indexOf(s)===-1){if(s)toast('Tamaño no válido');return;}var px=spx(s);ctxTok.style.width=px+'px';ctxTok.style.height=px+'px';ctxTok.style.fontSize=Math.round(px*.4)+'px';ctxTok.dataset.sz=s;hideCtx();});
-document.getElementById('ctx-del').addEventListener('click',function(){if(!ctxTok)return;if(window._db&&ctxTok.dataset.tokenid)window._db.ref('tokens/'+ctxTok.dataset.tokenid).remove();ctxTok.remove();hideCtx();});
+document.getElementById('ctx-del').addEventListener('click',function(){if(!ctxTok)return;if(window._db&&ctxTok.dataset.tokenid)window._db.ref('scenes/'+currentSceneId+'/tokens/'+ctxTok.dataset.tokenid).remove();ctxTok.remove();hideCtx();});
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(function(){t.classList.remove('on');},3000);}
 
@@ -597,7 +616,7 @@ document.addEventListener('mouseup',function(e){
   if(w<10||h<10)return; // demasiado pequeño
   var fid='f'+(++fogCounter)+Date.now();
   placeFog(fid,x,y,w,h);
-  if(window._db)window._db.ref('fog/'+fid).set({x:x,y:y,w:w,h:h,by:window._ME||'x'});
+  if(window._db)window._db.ref('scenes/'+currentSceneId+'/fog/'+fid).set({x:x,y:y,w:w,h:h,by:window._ME||'x'});
 });
 
 function placeFog(fid,x,y,w,h){
@@ -607,12 +626,198 @@ function placeFog(fid,x,y,w,h){
   el.style.cssText='left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;';
   el.addEventListener('contextmenu',function(e){
     e.preventDefault();e.stopPropagation();
-    if(window._db)window._db.ref('fog/'+fid).remove();
+    if(window._db)window._db.ref('scenes/'+currentSceneId+'/fog/'+fid).remove();
     el.remove();
   });
   el.addEventListener('mousedown',function(e){if(fogMode)e.stopPropagation();});
   tlayer.appendChild(el);
 }
+
+
+// ── SISTEMA DE ESCENAS ──
+var currentSceneId='scene1';
+var sceneCounter=1;
+var scenes={'scene1':{name:'Escena 1'}};
+
+function addScene(){
+  var name=prompt('Nombre de la escena:','Escena '+(++sceneCounter));
+  if(!name)return;
+  var sid='scene'+Date.now();
+  scenes[sid]={name:name};
+  // Guardar escena actual antes de añadir
+  saveCurrentScene();
+  // Añadir pestaña
+  renderSceneTabs();
+  switchScene(sid);
+}
+
+function deleteScene(e,sid){
+  e.stopPropagation();
+  if(Object.keys(scenes).length<=1){toast('No puedes eliminar la última escena');return;}
+  if(!confirm('¿Eliminar esta escena y todos sus tokens?'))return;
+  // Eliminar de Firebase
+  if(window._db){
+    window._db.ref('scenes/'+sid).remove();
+  }
+  delete scenes[sid];
+  // Si era la activa, ir a la primera disponible
+  if(currentSceneId===sid){
+    var remaining=Object.keys(scenes);
+    switchScene(remaining[0]);
+  }
+  renderSceneTabs();
+}
+
+function renderSceneTabs(){
+  var bar=document.getElementById('scene-bar');
+  var addBtn=document.getElementById('scene-add');
+  // Eliminar tabs existentes
+  bar.querySelectorAll('.scene-tab').forEach(function(t){t.remove();});
+  // Recrear
+  Object.keys(scenes).forEach(function(sid){
+    var tab=document.createElement('div');
+    tab.className='scene-tab'+(sid===currentSceneId?' active':'');
+    tab.dataset.sceneid=sid;
+    tab.textContent=scenes[sid].name;
+    // Botón eliminar
+    var del=document.createElement('span');
+    del.className='scene-del';del.textContent='✕';
+    del.addEventListener('click',function(e){deleteScene(e,sid);});
+    tab.appendChild(del);
+    // Doble clic = renombrar
+    tab.addEventListener('dblclick',function(){
+      var n=prompt('Renombrar escena:',scenes[sid].name);
+      if(!n)return;
+      scenes[sid].name=n;
+      renderSceneTabs();
+      toast('Escena renombrada');
+    });
+    tab.addEventListener('click',function(){
+      if(sid!==currentSceneId)switchScene(sid);
+    });
+    bar.insertBefore(tab,addBtn);
+  });
+}
+
+function saveCurrentScene(){
+  // Guardar estado actual: tokens, niebla, mapa
+  var tokData={};
+  document.querySelectorAll('.token[data-tokenid]').forEach(function(tok){
+    tokData[tok.dataset.tokenid]={
+      type:tok.dataset.type||'enemy',
+      label:tok.dataset.label,
+      sz:tok.dataset.sz,
+      cardid:tok.dataset.cardid||'',
+      portrait:tok.querySelector('img')?tok.querySelector('img').src:'',
+      emoji:tok.dataset.emoji||'',
+      x:parseFloat(tok.style.left),
+      y:parseFloat(tok.style.top)
+    };
+  });
+  var fogData={};
+  document.querySelectorAll('.fog-patch[data-fogid]').forEach(function(f){
+    fogData[f.dataset.fogid]={
+      x:parseFloat(f.style.left),
+      y:parseFloat(f.style.top),
+      w:parseFloat(f.style.width),
+      h:parseFloat(f.style.height)
+    };
+  });
+  var mapData=miEl.style.display==='block'?{
+    src:miEl.src,w:mw,h:mh,mx:mx,my:my,ms:ms,vx:vx,vy:vy,vs:vs
+  }:null;
+
+  if(window._db){
+    window._db.ref('scenes/'+currentSceneId).set({
+      name:scenes[currentSceneId]?scenes[currentSceneId].name:'Escena',
+      tokens:tokData,
+      fog:fogData,
+      map:mapData||null
+    });
+  }
+}
+
+function clearBoard(){
+  // Limpiar tokens
+  document.querySelectorAll('.token').forEach(function(t){t.remove();});
+  // Limpiar niebla
+  document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});
+  // Limpiar mapa
+  miEl.style.display='none';
+  miEl.src='';
+  mw=0;mh=0;mx=0;my=0;ms=1;
+  vx=0;vy=0;vs=1;
+  document.getElementById('bighint').style.display='block';
+  applyVP();
+}
+
+function switchScene(sid){
+  if(!scenes[sid])return;
+  // Guardar escena actual
+  saveCurrentScene();
+  // Cambiar
+  currentSceneId=sid;
+  renderSceneTabs();
+  // Limpiar tablero
+  clearBoard();
+  // Reconfigurar listeners para la nueva escena
+  if(window._setupSceneListeners) window._setupSceneListeners(sid);
+  // Mostrar loading
+  var loading=document.getElementById('scene-loading');
+  loading.style.display='block';
+  // Cargar nueva escena desde Firebase
+  if(window._db){
+    window._db.ref('scenes/'+sid).once('value',function(snap){
+      loading.style.display='none';
+      var d=snap.val();
+      if(!d)return;
+      // Actualizar nombre si existe
+      if(d.name)scenes[sid].name=d.name;
+      // Cargar mapa
+      if(d.map&&d.map.src){
+        var t=new Image();
+        t.onload=function(){
+          mw=d.map.w||t.naturalWidth;mh=d.map.h||t.naturalHeight;
+          ms=d.map.ms||1;mx=d.map.mx||0;my=d.map.my||0;
+          vx=d.map.vx||0;vy=d.map.vy||0;vs=d.map.vs||1;
+          miEl.src=d.map.src;miEl.style.display='block';
+          document.getElementById('bighint').style.display='none';
+          applyMap();applyVP();
+        };
+        t.src=d.map.src;
+      }
+      // Cargar tokens
+      if(d.tokens){
+        Object.keys(d.tokens).forEach(function(tid){
+          var tok=d.tokens[tid];
+          var px=spx(tok.sz);
+          var el=document.createElement('div');
+          el.className='token '+(tok.type||'enemy');
+          el.style.cssText='left:'+tok.x+'px;top:'+tok.y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
+          el.dataset.sz=tok.sz;el.dataset.label=tok.label;el.dataset.tokenid=tid;
+          el.dataset.type=tok.type||'enemy';el.dataset.cardid=tok.cardid||'';
+          if(tok.portrait){var i=new Image();i.src=tok.portrait;el.appendChild(i);}
+          else el.textContent=tok.emoji||'👹';
+          var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=tok.label;el.appendChild(lbl);
+          el.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=el;el.classList.add('drag');var r=el.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
+          el.addEventListener('contextmenu',function(e){e.preventDefault();e.stopPropagation();ctxTok=el;showCtx(e.clientX,e.clientY);});
+          tlayer.appendChild(el);
+        });
+      }
+      // Cargar niebla
+      if(d.fog){
+        Object.keys(d.fog).forEach(function(fid){
+          var f=d.fog[fid];
+          placeFog(fid,f.x,f.y,f.w,f.h);
+        });
+      }
+      toast('Escena: '+scenes[sid].name);
+    });
+  }
+}
+
+// Guardar automáticamente al cerrar/cambiar
+window.addEventListener('beforeunload',function(){saveCurrentScene();});
 
 applyVP();
 window.portraits=portraits;
@@ -684,22 +889,69 @@ window.addEventListener('load',function(){
     t.src=d.b64;
   });
 
-  db.ref('tokens').on('child_added',function(snap){
-    var d=snap.val();if(!d||d.by===window._ME)return;
-    if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
-    addRToken(d,snap.key);
-  });
+  // Listeners por escena — se reconfiguran al cambiar de escena
+  window._activeListeners=[];
+  window._setupSceneListeners=function(sid){
+    // Desconectar listeners anteriores
+    window._activeListeners.forEach(function(fn){fn();});
+    window._activeListeners=[];
+    // Limpiar tokens y niebla remotos del tablero
+    document.querySelectorAll('.token').forEach(function(t){if(t.dataset.by&&t.dataset.by!==window._ME)t.remove();});
+    document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});
 
-  // Niebla sincronizada
-  db.ref('fog').on('child_added',function(snap){
-    var d=snap.val();if(!d)return;
-    if(document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]'))return;
-    placeFog(snap.key,d.x,d.y,d.w,d.h);
-  });
-  db.ref('fog').on('child_removed',function(snap){
-    var el=document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]');
-    if(el)el.remove();
-  });
+    var sceneRef=db.ref('scenes/'+sid);
+
+    // TOKENS
+    var tokRef=sceneRef.child('tokens');
+    var h1=tokRef.on('child_added',function(snap){
+      var d=snap.val();if(!d||d.by===window._ME)return;
+      if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
+      addRToken(d,snap.key);
+    });
+    var h2=tokRef.on('child_changed',function(snap){
+      var d=snap.val();if(!d)return;
+      var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
+      if(d.pos&&d.pos.by!==window._ME){
+        var px=parseInt(tok.style.width)||spx(tok.dataset.sz||'mediano');
+        if(d.pos.cx!==undefined){tok.style.left=(d.pos.cx-px/2)+'px';tok.style.top=(d.pos.cy-px/2)+'px';}
+      }
+    });
+    var h3=tokRef.on('child_removed',function(snap){
+      var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(tok)tok.remove();
+    });
+    window._activeListeners.push(function(){tokRef.off('child_added',h1);tokRef.off('child_changed',h2);tokRef.off('child_removed',h3);});
+
+    // NIEBLA
+    var fogRef=sceneRef.child('fog');
+    var h4=fogRef.on('child_added',function(snap){
+      var d=snap.val();if(!d)return;
+      if(document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]'))return;
+      placeFog(snap.key,d.x,d.y,d.w,d.h);
+    });
+    var h5=fogRef.on('child_removed',function(snap){
+      var el=document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]');if(el)el.remove();
+    });
+    window._activeListeners.push(function(){fogRef.off('child_added',h4);fogRef.off('child_removed',h5);});
+
+    // MAPA
+    var mapRef=sceneRef.child('map');
+    var h6=mapRef.on('value',function(snap){
+      var d=snap.val();if(!d||!d.src)return;
+      if(miEl.src===d.src)return;
+      var t=new Image();
+      t.onload=function(){
+        mw=d.w||t.naturalWidth;mh=d.h||t.naturalHeight;
+        ms=d.ms||1;mx=d.mx||0;my=d.my||0;
+        vx=d.vx||0;vy=d.vy||0;vs=d.vs||1;
+        miEl.src=d.src;miEl.style.display='block';
+        document.getElementById('bighint').style.display='none';
+        applyMap();applyVP();
+      };
+      t.src=d.src;
+    });
+    window._activeListeners.push(function(){mapRef.off('value',h6);});
+  };
+  window._setupSceneListeners('scene1');
   db.ref('tokens').on('child_changed',function(snap){
     var d=snap.val();if(!d)return;var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
     if(d.pos&&d.pos.by!==window._ME){
