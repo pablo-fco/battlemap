@@ -223,6 +223,13 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 #scene-add{flex-shrink:0;padding:6px 10px;font-size:16px;color:#3d2a0e;cursor:pointer;border:none;background:none;}
 #scene-add:hover{color:#c9a84c;}
 #scene-loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:#c9a84c;font-size:13px;letter-spacing:2px;z-index:50;display:none;pointer-events:none;}
+
+/* ── CARTAS OCULTAS ── */
+.pc.hidden,.mc.hidden{opacity:.35;filter:grayscale(.5);}
+.hidden-badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.75);border-radius:3px;font-size:10px;padding:1px 4px;color:#ff9a9a;pointer-events:none;}
+/* Token invisible — DM lo ve con borde discontinuo, jugadores no lo ven */
+.token.invisible-tok{border-style:dashed;opacity:.45;}
+.token.invisible-tok.dm-view{opacity:.6;}
 </style>
 </head>
 <body>
@@ -263,6 +270,7 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
       <button class="cpb" id="cpb-ren">✏ Renombrar</button>
       <button class="cpb" id="cpb-sz">⟳ Cambiar tamaño</button>
       <button class="cpb" id="cpb-portrait">🖼 Asignar retrato</button>
+      <button class="cpb" id="cpb-visibility">👁 Ocultar carta</button>
       <button class="cpb del" id="cpb-del">🗑 Eliminar carta</button>
       <div id="cp-tip">Arrastra la carta al<br>tablero para colocar<br>un token</div>
     </div>
@@ -544,13 +552,25 @@ function mkMCard(name,sz,imgB64){
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 
-function startDrag(e,data){var portrait=data.cardid?portraits[data.cardid]:'';var px=spx(data.sz);ghost.innerHTML='';if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}else ghost.textContent=data.emoji;ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:1.5px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';pdrag={ox:px/2,oy:px/2};pdata=data;}
+function startDrag(e,data){
+  // Pasar estado de visibilidad de la carta
+  if(data.cardid){
+    var srcCard=document.querySelector('[data-cardid="'+data.cardid+'"]');
+    if(srcCard) data.hidden=srcCard.classList.contains('hidden')?1:0;
+  }
+  var portrait=data.cardid?portraits[data.cardid]:'';
+  var px=spx(data.sz);ghost.innerHTML='';
+  if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}else ghost.textContent=data.emoji;
+  ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:1.5px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';
+  pdrag={ox:px/2,oy:px/2};pdata=data;
+}
 
 function mkToken(type,content,label,clientX,clientY,sz,isImg,cardid){
   var px=spx(sz);var r=bwrap.getBoundingClientRect();var x=(clientX-r.left-vx)/vs-px/2,y=(clientY-r.top-vy)/vs-px/2;
   var d=document.createElement('div');var tid='t'+(window._ME||'x')+Date.now();
   d.className='token '+type;d.style.cssText='left:'+x+'px;top:'+y+'px;width:'+px+'px;height:'+px+'px;font-size:'+Math.round(px*.4)+'px;';
   d.dataset.sz=sz;d.dataset.label=label;d.dataset.tokenid=tid;d.dataset.type=type;if(cardid)d.dataset.cardid=cardid;
+  if(pdata&&pdata.hidden){d.classList.add('invisible-tok');if(isDM)d.classList.add('dm-view');d.dataset.invisible='1';}
   if(isImg&&content){var i=new Image();i.src=content;d.appendChild(i);}else d.textContent=content;
   var lbl=document.createElement('div');lbl.className='tlbl';lbl.textContent=label;d.appendChild(lbl);
   d.addEventListener('mousedown',function(e){if(e.button!==0||spc||editMode)return;e.preventDefault();e.stopPropagation();hideCtx();dtok=d;d.classList.add('drag');var r=d.getBoundingClientRect();dox=(e.clientX-r.left)/vs;doy=(e.clientY-r.top)/vs;});
@@ -890,6 +910,7 @@ function switchScene(sid){
           var cn=document.createElement('div');cn.className='cn';cn.textContent=m.name;
           var cs=document.createElement('div');cs.className='csz';cs.textContent=(m.sz||'mediano')+' · '+(SZD[m.sz]?SZD[m.sz].f:'5×5 ft');
           card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
+          if(m.hidden){card.classList.add('hidden');card.dataset.hidden='1';var _hb=document.createElement('span');_hb.className='hidden-badge';_hb.textContent='🚫';card.appendChild(_hb);if(!isDM)card.style.display='none';}
           card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
           card.addEventListener('mousedown',function(e){
             if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
@@ -925,6 +946,77 @@ function saveMapDebounced(){
   _mapSaveTimer=setTimeout(saveMapToFirebase,800);
 }
 
+
+
+// ── VISIBILIDAD DE CARTAS ──
+// isDM: el DM es quien tiene el panel de audio/dados visible (tecla M/D)
+// Simplificado: isDM se activa manualmente con una variable global
+var isDM=false;
+// El DM se identifica abriendo el panel de audio con una combinación especial
+// Por defecto todos son jugadores; el DM activa su modo con Ctrl+M
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey&&e.code==='KeyM'){
+    isDM=!isDM;
+    toast(isDM?'🎭 Modo DM activado':'🎭 Modo jugador activado');
+    // Mostrar/ocultar cartas ocultas según el modo
+    refreshHiddenVisibility();
+    e.preventDefault();
+  }
+});
+
+function refreshHiddenVisibility(){
+  // En modo DM: ver todas las cartas (ocultas con opacidad)
+  // En modo jugador: no ver las cartas ocultas
+  document.querySelectorAll('.pc.hidden,.mc.hidden').forEach(function(card){
+    card.style.display=isDM?'':'none';
+  });
+  // Tokens invisibles
+  document.querySelectorAll('.token.invisible-tok').forEach(function(tok){
+    tok.style.display=isDM?'':'none';
+  });
+}
+
+document.getElementById('cpb-visibility').addEventListener('click',function(){
+  if(!selCard)return;
+  var isHidden=selCard.classList.contains('hidden');
+  if(isHidden){
+    // Revelar
+    selCard.classList.remove('hidden');
+    selCard.dataset.hidden='0';
+    var badge=selCard.querySelector('.hidden-badge');
+    if(badge)badge.remove();
+    document.getElementById('cpb-visibility').textContent='👁 Ocultar carta';
+  } else {
+    // Ocultar
+    selCard.classList.add('hidden');
+    selCard.dataset.hidden='1';
+    if(!selCard.querySelector('.hidden-badge')){
+      var b=document.createElement('span');
+      b.className='hidden-badge';b.textContent='🚫';
+      selCard.appendChild(b);
+    }
+    document.getElementById('cpb-visibility').textContent='👁 Revelar carta';
+  }
+  // Guardar en Firebase
+  var hidden=selCard.classList.contains('hidden')?1:0;
+  if(window._db&&selCard.dataset.cardid){
+    if(selCard.classList.contains('mc'))
+      window._db.ref('scenes/'+currentSceneId+'/monsters/'+selCard.dataset.cardid).update({hidden:hidden});
+    else
+      window._db.ref('cards/'+selCard.dataset.cardid).update({hidden:hidden});
+  }
+  toast(hidden?'Carta oculta para jugadores':'Carta revelada');
+});
+
+// Actualizar botón de visibilidad al seleccionar carta
+var _origOpenCardPanel=openCardPanel;
+openCardPanel=function(card){
+  _origOpenCardPanel(card);
+  var btn=document.getElementById('cpb-visibility');
+  if(btn&&card){
+    btn.textContent=card.classList.contains('hidden')?'👁 Revelar carta':'👁 Ocultar carta';
+  }
+};
 
 applyVP();
 window.portraits=portraits;
@@ -1013,7 +1105,8 @@ window.addEventListener('load',function(){
     var h1=tokRef.on('child_added',function(snap){
       var d=snap.val();if(!d||d.by===window._ME)return;
       if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
-      addRToken(d,snap.key);
+      var tok=addRToken(d,snap.key);
+      if(tok&&d.invisible){tok.classList.add('invisible-tok');if(isDM)tok.classList.add('dm-view');else tok.style.display='none';}
     });
     var h2=tokRef.on('child_changed',function(snap){
       var d=snap.val();if(!d)return;
@@ -1074,6 +1167,7 @@ window.addEventListener('load',function(){
       var cn=document.createElement('div');cn.className='cn';cn.textContent=d.name;
       var cs=document.createElement('div');cs.className='csz';cs.textContent=(d.sz||'mediano');
       card.appendChild(ci);card.appendChild(cn);card.appendChild(cs);
+      if(d.hidden){card.classList.add('hidden');card.dataset.hidden='1';var _hb2=document.createElement('span');_hb2.className='hidden-badge';_hb2.textContent='🚫';card.appendChild(_hb2);if(!isDM)card.style.display='none';}
       card.addEventListener('click',function(e){e.stopPropagation();openCardPanel(card);});
       card.addEventListener('mousedown',function(e){
         if(e.button!==0)return;var sx=e.clientX,sy=e.clientY;
