@@ -153,6 +153,46 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .fx-label{font-size:14.7px;color:#8a6a30;letter-spacing:.5px;}
 .fx-add{border-style:dashed;color:#5c3d1a;}
 .fx-add:hover{color:#c9a84c;}
+
+/* ── PANEL DE DADOS ── */
+#dice-toggle{position:fixed;bottom:70px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:42px;height:42px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+#dice-toggle:hover{background:#3d2d12;}
+#dice-panel{position:fixed;bottom:120px;right:20px;width:300px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;z-index:800;display:none;flex-direction:column;box-shadow:0 4px 32px rgba(0,0,0,.8);}
+#dice-panel.open{display:flex;}
+#dice-header{padding:10px 14px;border-bottom:1px solid #2a1f0e;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+#dice-header h2{font-size:12px;color:#c9a84c;letter-spacing:2px;flex:1;}
+#dice-private-btn{background:#2a1f0e;border:1px solid #3d2d12;color:#8a6a30;font-size:9px;padding:3px 8px;border-radius:3px;cursor:pointer;font-family:Georgia,serif;letter-spacing:1px;}
+#dice-private-btn.on{background:#5c3d1a;border-color:#c9a84c;color:#c9a84c;}
+#dice-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+#dice-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.die-btn{background:#1a1209;border:1px solid #3d2d12;border-radius:6px;padding:10px 4px;cursor:pointer;text-align:center;transition:background .15s,border-color .15s;}
+.die-btn:hover{background:#2a1f0e;border-color:#c9a84c;}
+.die-btn:active{background:#3d2d12;transform:scale(.95);}
+.die-icon{font-size:22px;display:block;margin-bottom:2px;}
+.die-label{font-size:9px;color:#8a6a30;letter-spacing:1px;font-family:Georgia,serif;}
+#dice-modifier{display:flex;align-items:center;gap:8px;}
+#dice-modifier label{font-size:10px;color:#8a6a30;letter-spacing:1px;flex-shrink:0;}
+#dice-mod-val{width:60px;background:#1a1209;border:1px solid #3d2d12;color:#e8d5a3;padding:4px 8px;border-radius:4px;font-family:Georgia,serif;font-size:12px;text-align:center;}
+#dice-result-box{background:#1a1209;border:1px solid #2a1f0e;border-radius:6px;padding:10px 12px;text-align:center;}
+#dice-result-num{font-size:36px;color:#c9a84c;font-family:Georgia,serif;display:block;line-height:1;}
+#dice-result-detail{font-size:10px;color:#8a6a30;margin-top:4px;letter-spacing:.5px;}
+#dice-history{max-height:120px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;}
+#dice-history::-webkit-scrollbar{width:3px;}
+#dice-history::-webkit-scrollbar-thumb{background:#2a1f0e;}
+.dice-log{font-size:10px;color:#8a6a30;padding:3px 0;border-bottom:1px solid #0f0c08;display:flex;justify-content:space-between;font-family:Georgia,serif;}
+.dice-log .dl-who{color:#5c3d1a;}
+.dice-log .dl-result{color:#c9a84c;font-size:12px;}
+.dice-log.private{color:#3d2d12;}
+.dice-log.private .dl-result{color:#5c3d1a;}
+
+/* Notificación de tirada en el tablero */
+#dice-notification{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(13,10,5,.95);border:1px solid #c9a84c;border-radius:8px;padding:16px 28px;z-index:950;display:none;text-align:center;pointer-events:none;}
+#dice-notification.show{display:block;animation:diceNotifAnim .3s ease;}
+@keyframes diceNotifAnim{from{transform:translate(-50%,-50%) scale(.7);opacity:0;}to{transform:translate(-50%,-50%) scale(1);opacity:1;}}
+#dn-who{font-size:11px;color:#8a6a30;letter-spacing:1px;margin-bottom:4px;}
+#dn-dice{font-size:13px;color:#5c3d1a;margin-bottom:6px;}
+#dn-result{font-size:52px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
+#dn-detail{font-size:11px;color:#8a6a30;margin-top:4px;}
 </style>
 </head>
 <body>
@@ -1238,6 +1278,213 @@ window.addEventListener('load', function(){
     };
   }
 });
+</script>
+
+
+<!-- PANEL DE DADOS -->
+<button id="dice-toggle" title="Panel de dados (D)">🎲</button>
+<div id="dice-panel">
+  <div id="dice-header">
+    <h2>🎲 DADOS</h2>
+    <button id="dice-private-btn" title="Modo privado — solo el DM ve la tirada">🔒 Privado</button>
+  </div>
+  <div id="dice-body">
+    <div id="dice-grid">
+      <div class="die-btn" onclick="rollDie(4)"><span class="die-icon">🔺</span><span class="die-label">d4</span></div>
+      <div class="die-btn" onclick="rollDie(6)"><span class="die-icon">⬡</span><span class="die-label">d6</span></div>
+      <div class="die-btn" onclick="rollDie(8)"><span class="die-icon">🔷</span><span class="die-label">d8</span></div>
+      <div class="die-btn" onclick="rollDie(10)"><span class="die-icon">🔟</span><span class="die-label">d10</span></div>
+      <div class="die-btn" onclick="rollDie(12)"><span class="die-icon">⬠</span><span class="die-label">d12</span></div>
+      <div class="die-btn" onclick="rollDie(20)"><span class="die-icon">🎯</span><span class="die-label">d20</span></div>
+      <div class="die-btn" onclick="rollDie(100)"><span class="die-icon">💯</span><span class="die-label">d100</span></div>
+      <div class="die-btn" onclick="rollMultiple()"><span class="die-icon">🎲</span><span class="die-label">multi</span></div>
+    </div>
+    <div id="dice-modifier">
+      <label>Modificador:</label>
+      <input type="number" id="dice-mod-val" value="0" min="-20" max="20">
+    </div>
+    <div id="dice-result-box">
+      <span id="dice-result-num">—</span>
+      <div id="dice-result-detail"></div>
+    </div>
+    <div id="dice-history"></div>
+  </div>
+</div>
+
+<!-- NOTIFICACIÓN DE TIRADA -->
+<div id="dice-notification">
+  <div id="dn-who"></div>
+  <div id="dn-dice"></div>
+  <div id="dn-result"></div>
+  <div id="dn-detail"></div>
+</div>
+
+
+<script>
+// ── SISTEMA DE DADOS ──
+var dicePrivate=false;
+var dicePlayerName=null;
+
+// Pedir nombre al jugador la primera vez
+function getDicePlayerName(){
+  if(!dicePlayerName){
+    dicePlayerName=prompt('¿Cómo te llamas? (aparecerá en las tiradas)','Jugador');
+    if(!dicePlayerName) dicePlayerName='Jugador';
+  }
+  return dicePlayerName;
+}
+
+// Toggle panel con tecla D
+document.addEventListener('keydown',function(e){
+  if(e.code==='KeyD'&&e.target.tagName!=='INPUT'){
+    document.getElementById('dice-panel').classList.toggle('open');
+  }
+});
+document.getElementById('dice-toggle').addEventListener('click',function(){
+  document.getElementById('dice-panel').classList.toggle('open');
+});
+
+// Modo privado
+document.getElementById('dice-private-btn').addEventListener('click',function(){
+  dicePrivate=!dicePrivate;
+  this.classList.toggle('on',dicePrivate);
+  this.textContent=dicePrivate?'🔒 Privado':'🔓 Público';
+});
+
+// Tirar dado
+function rollDie(sides){
+  var mod=parseInt(document.getElementById('dice-mod-val').value)||0;
+  var roll=Math.floor(Math.random()*sides)+1;
+  var total=roll+mod;
+  var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
+  var detail='d'+sides+(modStr?modStr:'');
+  if(mod!==0) detail+=' = '+roll+(modStr);
+
+  showDiceResult(total, detail, sides, roll);
+
+  if(!dicePrivate){
+    var who=getDicePlayerName();
+    publishRoll(who, sides, roll, mod, total);
+  } else {
+    addToHistory('DM (privado)', 'd'+sides, total, true);
+  }
+}
+
+// Tirada múltiple
+function rollMultiple(){
+  var input=prompt('Tirada (ej: 2d6+3, 1d20-1):','2d6+3');
+  if(!input)return;
+  var match=input.match(/(\d+)d(\d+)([+-]\d+)?/i);
+  if(!match){toast('Formato no válido. Usa: 2d6+3');return;}
+  var num=parseInt(match[1])||1;
+  var sides=parseInt(match[2]);
+  var mod=parseInt(match[3])||0;
+  var rolls=[];
+  for(var i=0;i<num;i++) rolls.push(Math.floor(Math.random()*sides)+1);
+  var sum=rolls.reduce(function(a,b){return a+b;},0);
+  var total=sum+mod;
+  var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
+  var detail=num+'d'+sides+(modStr||'')+' = ['+rolls.join(',')+']'+(mod?modStr:'');
+
+  showDiceResult(total, detail, sides, sum);
+
+  if(!dicePrivate){
+    var who=getDicePlayerName();
+    publishRoll(who, sides, sum, mod, total, num, rolls);
+  } else {
+    addToHistory('DM (privado)', num+'d'+sides, total, true);
+  }
+}
+
+// Mostrar resultado local
+function showDiceResult(total, detail, sides, raw){
+  document.getElementById('dice-result-num').textContent=total;
+  document.getElementById('dice-result-detail').textContent=detail;
+
+  // Colores especiales para 1 y máximo en d20
+  var el=document.getElementById('dice-result-num');
+  el.style.color='#c9a84c';
+  if(sides===20){
+    if(raw===20) el.style.color='#4aff8a';
+    if(raw===1)  el.style.color='#ff4a4a';
+  }
+}
+
+// Publicar tirada en Firebase
+function publishRoll(who, sides, roll, mod, total, num, rolls){
+  if(window._db){
+    var key=window._db.ref('rolls').push().key;
+    window._db.ref('rolls/'+key).set({
+      who:who,
+      sides:sides,
+      roll:roll,
+      mod:mod,
+      total:total,
+      num:num||1,
+      rolls:rolls||[roll],
+      ts:Date.now()
+    });
+  }
+  // También mostrar localmente en historial
+  var detail='d'+sides+(mod>0?'+'+mod:mod<0?''+mod:'');
+  addToHistory(who, detail, total, false);
+}
+
+// Historial local
+function addToHistory(who, dice, total, isPrivate){
+  var history=document.getElementById('dice-history');
+  var entry=document.createElement('div');
+  entry.className='dice-log'+(isPrivate?' private':'');
+  entry.innerHTML='<span class="dl-who">'+who+'</span><span>'+dice+'</span><span class="dl-result">'+total+'</span>';
+  history.insertBefore(entry,history.firstChild);
+  // Máximo 20 entradas
+  while(history.children.length>20) history.removeChild(history.lastChild);
+}
+
+// Escuchar tiradas de Firebase
+window.addEventListener('load',function(){
+  if(!window._db) return;
+
+  // Limpiar tiradas viejas al conectar (solo las de hace más de 24h)
+  window._db.ref('rolls').on('child_added',function(snap){
+    var d=snap.val();
+    if(!d) return;
+    // Ignorar tiradas muy antiguas (más de 1 min al cargar)
+    if(Date.now()-d.ts>60000 && !window._diceReady) return;
+
+    var mod=d.mod||0;
+    var modStr=mod>0?'+'+mod:mod<0?''+mod:'';
+    var detail=(d.num>1?d.num:'')+'d'+d.sides+(modStr||'');
+    addToHistory(d.who, detail, d.total, false);
+
+    // Mostrar notificación en el tablero
+    showDiceNotification(d.who, detail, d.total, d.sides, d.roll);
+  });
+
+  // Marcar como listo tras un pequeño delay para ignorar historial previo
+  setTimeout(function(){window._diceReady=true;},1000);
+});
+
+// Notificación flotante en el tablero
+var notifTimer=null;
+function showDiceNotification(who, dice, total, sides, raw){
+  var notif=document.getElementById('dice-notification');
+  document.getElementById('dn-who').textContent=who;
+  document.getElementById('dn-dice').textContent=dice;
+  document.getElementById('dn-result').textContent=total;
+
+  var detail='';
+  if(sides===20){
+    if(raw===20) detail='⚡ ¡CRÍTICO!';
+    else if(raw===1) detail='💀 ¡PIFIA!';
+  }
+  document.getElementById('dn-detail').textContent=detail;
+  document.getElementById('dn-result').style.color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';
+
+  notif.classList.add('show');
+  clearTimeout(notifTimer);
+  notifTimer=setTimeout(function(){notif.classList.remove('show');},3000);
+}
 </script>
 
 </body>
