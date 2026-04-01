@@ -228,6 +228,49 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 <input type="file" id="fa"        accept="image/*" style="display:none">
 <input type="file" id="fportrait" accept="image/*" style="display:none">
 
+<!-- AUDIO PANEL -->
+<button id="audio-toggle" title="Panel de audio (M)">🎵</button>
+<div id="audio-panel">
+  <div id="audio-header">
+    <h2>🎵 AUDIO — MASTER</h2>
+    <div id="audio-tabs">
+      <button class="atab on" onclick="showAudioTab('music',this)">Música</button>
+      <button class="atab" onclick="showAudioTab('fx',this)">Efectos</button>
+    </div>
+  </div>
+  <div id="audio-body">
+    <!-- NOW PLAYING -->
+    <div id="now-playing">
+      <div id="np-title">Sin pista seleccionada</div>
+      <div id="np-controls">
+        <button class="np-btn" id="np-stop" onclick="audioStop()" title="Stop">⏹</button>
+        <button class="np-btn" id="np-play" onclick="audioPlayPause()" title="Play/Pause">▶</button>
+        <button class="np-btn" id="np-loop" onclick="audioToggleLoop()" title="Loop">🔁</button>
+        <input type="range" id="np-progress" min="0" max="100" value="0" oninput="audioSeek(this.value)">
+        <span id="np-time">0:00</span>
+      </div>
+      <div id="np-vol-row">
+        <span>🔊</span>
+        <input type="range" id="np-vol" min="0" max="100" value="70" oninput="audioVol(this.value)">
+        <div id="np-fade"><span>Fade</span><input type="range" id="np-fade-val" min="0" max="5" value="2" step="0.5"><span id="np-fade-label">2s</span></div>
+      </div>
+    </div>
+
+    <!-- TAB MÚSICA -->
+    <div id="tab-music">
+      <div id="lists-container"></div>
+      <button class="new-list-btn" onclick="createList()">+ Nueva lista</button>
+    </div>
+
+    <!-- TAB EFECTOS -->
+    <div id="tab-fx" style="display:none">
+      <div class="fx-grid" id="fx-grid"></div>
+      <button class="new-list-btn" style="margin-top:8px" onclick="addFxBtn()">+ Añadir efecto</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
+<input type="file" id="f-fx" accept="audio/*" style="display:none">
 <script>
 var CELL=26;
 var SZL=['diminuto','pequeño','mediano','grande','enorme','gargantuesco'];
@@ -642,9 +685,12 @@ document.addEventListener('keydown',function(e){
     document.getElementById('audio-panel').classList.toggle('open');
   }
 });
-document.getElementById('audio-toggle').addEventListener('click',function(){
-  document.getElementById('audio-panel').classList.toggle('open');
-});
+var audioToggleBtn=document.getElementById('audio-toggle');
+if(audioToggleBtn){
+  audioToggleBtn.addEventListener('click',function(){
+    document.getElementById('audio-panel').classList.toggle('open');
+  });
+}
 
 // Tabs
 function showAudioTab(tab,btn){
@@ -910,50 +956,6 @@ function playFx(url,name){
 }
 
 </script>
-
-<!-- AUDIO PANEL -->
-<button id="audio-toggle" title="Panel de audio (M)">🎵</button>
-<div id="audio-panel">
-  <div id="audio-header">
-    <h2>🎵 AUDIO — MASTER</h2>
-    <div id="audio-tabs">
-      <button class="atab on" onclick="showAudioTab('music',this)">Música</button>
-      <button class="atab" onclick="showAudioTab('fx',this)">Efectos</button>
-    </div>
-  </div>
-  <div id="audio-body">
-    <!-- NOW PLAYING -->
-    <div id="now-playing">
-      <div id="np-title">Sin pista seleccionada</div>
-      <div id="np-controls">
-        <button class="np-btn" id="np-stop" onclick="audioStop()" title="Stop">⏹</button>
-        <button class="np-btn" id="np-play" onclick="audioPlayPause()" title="Play/Pause">▶</button>
-        <button class="np-btn" id="np-loop" onclick="audioToggleLoop()" title="Loop">🔁</button>
-        <input type="range" id="np-progress" min="0" max="100" value="0" oninput="audioSeek(this.value)">
-        <span id="np-time">0:00</span>
-      </div>
-      <div id="np-vol-row">
-        <span>🔊</span>
-        <input type="range" id="np-vol" min="0" max="100" value="70" oninput="audioVol(this.value)">
-        <div id="np-fade"><span>Fade</span><input type="range" id="np-fade-val" min="0" max="5" value="2" step="0.5"><span id="np-fade-label">2s</span></div>
-      </div>
-    </div>
-
-    <!-- TAB MÚSICA -->
-    <div id="tab-music">
-      <div id="lists-container"></div>
-      <button class="new-list-btn" onclick="createList()">+ Nueva lista</button>
-    </div>
-
-    <!-- TAB EFECTOS -->
-    <div id="tab-fx" style="display:none">
-      <div class="fx-grid" id="fx-grid"></div>
-      <button class="new-list-btn" style="margin-top:8px" onclick="addFxBtn()">+ Añadir efecto</button>
-    </div>
-  </div>
-</div>
-<input type="file" id="f-track" accept="audio/*" style="display:none" multiple>
-<input type="file" id="f-fx" accept="audio/*" style="display:none">
 
 </body>
 </html>
