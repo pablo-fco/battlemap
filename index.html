@@ -195,6 +195,21 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .dn-dice{font-size:13px;color:#5c3d1a;margin-bottom:6px;}
 .dn-result{font-size:54px;color:#c9a84c;font-family:Georgia,serif;line-height:1;}
 .dn-detail{font-size:13px;color:#8a6a30;margin-top:5px;}
+
+/* ── NIEBLA DE GUERRA ── */
+#fog-toggle{position:fixed;bottom:124px;right:20px;z-index:800;background:#2a1f0e;border:1px solid #5c3d1a;color:#c9a84c;width:44px;height:44px;border-radius:50%;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.5);}
+#fog-toggle:hover{background:#3d2d12;}
+#fog-toggle.active{background:#1a3a5c;border-color:#4a9eff;color:#4a9eff;}
+.fog-patch{position:absolute;background:rgba(15,10,5,.88);border-radius:4px;cursor:pointer;z-index:8;display:flex;align-items:center;justify-content:center;transition:opacity .2s;}
+.fog-patch:hover{opacity:.7;}
+.fog-patch-dm{cursor:crosshair;}
+#fog-size-panel{position:fixed;bottom:176px;right:20px;background:#0d0a05;border:1px solid #5c3d1a;border-radius:8px;padding:10px 14px;z-index:800;display:none;flex-direction:column;gap:8px;min-width:160px;box-shadow:0 4px 20px rgba(0,0,0,.7);}
+#fog-size-panel.open{display:flex;}
+#fog-size-panel label{font-size:11px;color:#8a6a30;letter-spacing:1px;}
+#fog-size-panel input{accent-color:#4a9eff;}
+.fog-size-btn{background:#1a1209;border:1px solid #2a1f0e;color:#e8d5a3;font-size:10px;padding:5px 8px;border-radius:4px;cursor:pointer;font-family:Georgia,serif;text-align:center;}
+.fog-size-btn:hover{border-color:#4a9eff;color:#4a9eff;}
+#fog-hint{font-size:9px;color:#5c3d1a;letter-spacing:.5px;line-height:1.5;}
 </style>
 </head>
 <body>
@@ -320,6 +335,11 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 </div>
 <div id="dice-anim"><div id="dice-anim-box"><span id="da-die"></span><span id="da-num"></span><span id="da-lbl"></span><span id="da-spc"></span></div></div>
 <div id="dice-notif"><div class="dn-who" id="dn-who"></div><div class="dn-dice" id="dn-dice"></div><div class="dn-result" id="dn-result"></div><div class="dn-detail" id="dn-detail"></div></div>
+
+
+<!-- NIEBLA DE GUERRA -->
+<button id="fog-toggle" title="Niebla de guerra (N)">🌫</button>
+
 
 <div id="ghost"></div>
 <div id="toast"></div>
@@ -521,9 +541,88 @@ function updateDicePanel(total,detail,sides,raw){var el=document.getElementById(
 function addDiceLog(who,dice,total,isPriv,special){var h=document.getElementById('dice-history');var e=document.createElement('div');e.className='dice-log'+(isPriv?' priv':'');e.innerHTML='<span class="dl-who">'+who+'</span><span class="dl-mid">'+dice+(special?' '+special:'')+'</span><span class="dl-result">'+total+'</span>';h.insertBefore(e,h.firstChild);while(h.children.length>20)h.removeChild(h.lastChild);}
 function showDiceNotif(who,dice,total,sides,raw,special){var n=document.getElementById('dice-notif');document.getElementById('dn-who').textContent=who;document.getElementById('dn-dice').textContent=dice;document.getElementById('dn-result').textContent=total;document.getElementById('dn-detail').textContent=special||'';document.getElementById('dn-result').style.color=sides===20&&raw===20?'#4aff8a':sides===20&&raw===1?'#ff4a4a':'#c9a84c';n.classList.remove('show');void n.offsetWidth;n.classList.add('show');clearTimeout(notifTimer);notifTimer=setTimeout(function(){n.classList.remove('show');},3500);}
 
+
+// ── NIEBLA DE GUERRA ──
+var fogMode=false, fogCounter=0;
+var fogDragging=false, fogStartX=0, fogStartY=0;
+var fogPreview=null;
+
+document.getElementById('fog-toggle').addEventListener('click',function(){
+  fogMode=!fogMode;
+  this.classList.toggle('active',fogMode);
+  bwrap.style.cursor=fogMode?'crosshair':'';
+});
+
+// Teclado N
+document.addEventListener('keydown',function(e){
+  if(e.target.tagName==='INPUT')return;
+  if(e.code==='KeyN'){
+    fogMode=!fogMode;
+    document.getElementById('fog-toggle').classList.toggle('active',fogMode);
+    bwrap.style.cursor=fogMode?'crosshair':'';
+  }
+});
+
+// Iniciar arrastre de niebla
+bwrap.addEventListener('mousedown',function(e){
+  if(!fogMode||e.button!==0||spc||editMode)return;
+  if(e.target.classList.contains('fog-patch'))return;
+  e.preventDefault();e.stopPropagation();
+  var r=bwrap.getBoundingClientRect();
+  fogStartX=(e.clientX-r.left-vx)/vs;
+  fogStartY=(e.clientY-r.top-vy)/vs;
+  fogDragging=true;
+  // Crear preview
+  fogPreview=document.createElement('div');
+  fogPreview.style.cssText='position:absolute;border:2px dashed #4a9eff;background:rgba(74,158,255,.15);pointer-events:none;z-index:9;left:'+fogStartX+'px;top:'+fogStartY+'px;width:0;height:0;';
+  tlayer.appendChild(fogPreview);
+});
+
+// Actualizar preview mientras arrastra
+document.addEventListener('mousemove',function(e){
+  if(!fogDragging||!fogPreview)return;
+  var r=bwrap.getBoundingClientRect();
+  var cx=(e.clientX-r.left-vx)/vs;
+  var cy=(e.clientY-r.top-vy)/vs;
+  var x=Math.min(fogStartX,cx), y=Math.min(fogStartY,cy);
+  var w=Math.abs(cx-fogStartX), h=Math.abs(cy-fogStartY);
+  fogPreview.style.left=x+'px';fogPreview.style.top=y+'px';
+  fogPreview.style.width=w+'px';fogPreview.style.height=h+'px';
+});
+
+// Soltar — crear parche de niebla
+document.addEventListener('mouseup',function(e){
+  if(!fogDragging||!fogPreview)return;
+  fogDragging=false;
+  var r=bwrap.getBoundingClientRect();
+  var cx=(e.clientX-r.left-vx)/vs;
+  var cy=(e.clientY-r.top-vy)/vs;
+  var x=Math.min(fogStartX,cx), y=Math.min(fogStartY,cy);
+  var w=Math.abs(cx-fogStartX), h=Math.abs(cy-fogStartY);
+  fogPreview.remove();fogPreview=null;
+  if(w<10||h<10)return; // demasiado pequeño
+  var fid='f'+(++fogCounter)+Date.now();
+  placeFog(fid,x,y,w,h);
+  if(window._db)window._db.ref('fog/'+fid).set({x:x,y:y,w:w,h:h,by:window._ME||'x'});
+});
+
+function placeFog(fid,x,y,w,h){
+  var el=document.createElement('div');
+  el.className='fog-patch';
+  el.dataset.fogid=fid;
+  el.style.cssText='left:'+x+'px;top:'+y+'px;width:'+w+'px;height:'+h+'px;';
+  el.addEventListener('contextmenu',function(e){
+    e.preventDefault();e.stopPropagation();
+    if(window._db)window._db.ref('fog/'+fid).remove();
+    el.remove();
+  });
+  el.addEventListener('mousedown',function(e){if(fogMode)e.stopPropagation();});
+  tlayer.appendChild(el);
+}
+
 applyVP();
 window.portraits=portraits;
-window._clearAllTokens=function(){if(window._db){window._db.ref('tokens').remove();window._db.ref('cards').remove();}document.querySelectorAll('.token').forEach(function(t){t.remove();});toast('Tablero limpiado');};
+window._clearAllTokens=function(){if(window._db){window._db.ref('tokens').remove();window._db.ref('cards').remove();window._db.ref('fog').remove();}document.querySelectorAll('.token').forEach(function(t){t.remove();});document.querySelectorAll('.fog-patch').forEach(function(f){f.remove();});toast('Tablero limpiado');};
 console.log('Para limpiar el tablero: _clearAllTokens()');
 </script>
 
@@ -595,6 +694,17 @@ window.addEventListener('load',function(){
     var d=snap.val();if(!d||d.by===window._ME)return;
     if(document.querySelector('.token[data-tokenid="'+snap.key+'"]'))return;
     addRToken(d,snap.key);
+  });
+
+  // Niebla sincronizada
+  db.ref('fog').on('child_added',function(snap){
+    var d=snap.val();if(!d)return;
+    if(document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]'))return;
+    placeFog(snap.key,d.x,d.y,d.w,d.h);
+  });
+  db.ref('fog').on('child_removed',function(snap){
+    var el=document.querySelector('.fog-patch[data-fogid="'+snap.key+'"]');
+    if(el)el.remove();
   });
   db.ref('tokens').on('child_changed',function(snap){
     var d=snap.val();if(!d)return;var tok=document.querySelector('.token[data-tokenid="'+snap.key+'"]');if(!tok)return;
