@@ -64,9 +64,9 @@ h1{font-size:14px;color:#c9a84c;letter-spacing:3px;flex:1;}
 .token:hover{z-index:20;}
 .token.drag{cursor:grabbing;z-index:100;opacity:.85;}
 .token img{width:100%;height:100%;object-fit:cover;border-radius:50%;pointer-events:none;}
-.token.player{border:3px solid #4a9eff;box-shadow:0 0 12px rgba(74,158,255,.5);}
-.token.enemy{border:3px solid #ff4a4a;box-shadow:0 0 12px rgba(255,74,74,.5);}
-.token.npc{border:3px solid #4aff8a;box-shadow:0 0 10px rgba(74,255,138,.4);}
+.token.player{border:1.5px solid #4a9eff;box-shadow:0 0 8px rgba(74,158,255,.4);}
+.token.enemy{border:1.5px solid #ff4a4a;box-shadow:0 0 8px rgba(255,74,74,.4);}
+.token.npc{border:1.5px solid #4aff8a;box-shadow:0 0 6px rgba(74,255,138,.3);}
 .tlbl{position:absolute;bottom:-17px;left:50%;transform:translateX(-50%);font-size:8px;white-space:nowrap;color:#e8d5a3;background:rgba(0,0,0,.85);padding:1px 5px;border-radius:3px;pointer-events:none;}
 #ctx{position:fixed;background:#1a1209;border:1px solid #5c3d1a;border-radius:6px;padding:4px;z-index:900;display:none;flex-direction:column;gap:1px;min-width:150px;box-shadow:0 4px 24px rgba(0,0,0,.7);}
 #ctx.on{display:flex;}
@@ -490,7 +490,7 @@ function mkMCard(name,sz,imgB64){
   toast('Carta añadida · Selecciónala y usa "Asignar retrato"');
 }
 
-function startDrag(e,data){var portrait=data.cardid?portraits[data.cardid]:'';var px=spx(data.sz);ghost.innerHTML='';if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}else ghost.textContent=data.emoji;ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:3px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';pdrag={ox:px/2,oy:px/2};pdata=data;}
+function startDrag(e,data){var portrait=data.cardid?portraits[data.cardid]:'';var px=spx(data.sz);ghost.innerHTML='';if(portrait){var i=new Image();i.src=portrait;ghost.appendChild(i);}else ghost.textContent=data.emoji;ghost.style.cssText='display:flex;position:fixed;z-index:999;pointer-events:none;border-radius:50%;width:'+px+'px;height:'+px+'px;left:'+(e.clientX-px/2)+'px;top:'+(e.clientY-px/2)+'px;font-size:'+Math.round(px*.4)+'px;background:#2a1f0e;border:1.5px solid #c9a84c;opacity:.9;overflow:hidden;align-items:center;justify-content:center;';pdrag={ox:px/2,oy:px/2};pdata=data;}
 
 function mkToken(type,content,label,clientX,clientY,sz,isImg,cardid){
   var px=spx(sz);var r=bwrap.getBoundingClientRect();var x=(clientX-r.left-vx)/vs-px/2,y=(clientY-r.top-vy)/vs-px/2;
